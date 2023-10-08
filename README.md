@@ -2,7 +2,7 @@
 
 Добро пожаловать в репозиторий сайта ECommerce, с использованием Python 3.11 и Django Framework 4.2.1. Проект представляет представляет собой полноценное веб-приложение для электронной коммерции.
 
-![Screenshot_2.jpg](..%2F..%2FSiteParser%2FScreenshot_2.jpg)screenshot.png)
+![Screenshot_2.jpg](Screenshot_2.jpg)
 
 ## О проекте
 
