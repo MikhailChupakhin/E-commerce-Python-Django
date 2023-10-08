@@ -1,0 +1,38 @@
+{% extends 'products/base.html' %}
+{% load cache static %}
+{% load custom_filters %}
+
+{% block css %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'vendor/css/compare.css' %}">
+{% endblock %}
+
+{% block content %}
+    <h1>Сравнение товаров</h1>
+
+    <div class="comparison-table">
+        {% if products %}
+            <div class="product-row">
+                <div class="products-container">
+                    {% for product in products %}
+                        <div class="row comparing-product">
+                            <div class="product-image">
+                                <img src="{{ product.image.url }}" alt="{{ product.name }}" width="200" height="200">
+                            </div>
+                            <div class="product-details">
+                                <div class="product-detail">
+                                    <h2 class="detail-content">{{ product.name }}</h2>
+                                </div>
+                                <div class="product-detail">
+                                    <h3 class="detail-content product-price">Цена: {{ product.price|floatformat:2|comma_to_dot }} ₽</h3>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% else %}
+            <p>Список для сравнения пуст.</p>
+        {% endif %}
+    </div>
+{% endblock %}

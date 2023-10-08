@@ -1,0 +1,59 @@
+<form method="GET" action="{% url 'products:product_filter' %}">
+    <div class="card">
+        <div class="card-header">
+            Фильтрация по параметрам
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <h6>По цене:</h6>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="min_price">От:</label>
+                        <input type="number" name="min_price" id="min_price" class="form-control" value="{{ min_price }}">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="max_price">До:</label>
+                        <input type="number" name="max_price" id="max_price" class="form-control" value="{{ max_price }}">
+                    </div>
+                </div>
+            </div>
+            <div id="price-slider" data-min-price="{{ min_price }}" data-max-price="{{ max_price }}"></div>
+
+
+            <div class="row">
+                <h6>По наличию:</h6>
+                <div class="form-group form-check">
+                    <input type="checkbox" name="in_stock" id="in_stock" class="form-check-input" {% if in_stock %}checked{% endif %}>
+                    <label class="form-check-label" for="in_stock">Только в наличии</label>
+                </div>
+            </div>
+
+
+            <div class="row">
+                <h6>По производителю:</h6>
+                <div class="form-group">
+                    <div class="dropdown">
+                        <button class="btn btn-secondary dropdown-toggle" type="button" id="manufacturerDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Выберите производителя
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="manufacturerDropdown">
+                            {% for characteristic in manufacturers %}
+                            <div class="form-check">
+                                <input type="checkbox" name="manufacturer[]" id="manufacturer_{{ characteristic }}" class="form-check-input" value="{{ characteristic }}" {% if characteristic in selected_manufacturers %}checked{% endif %}>
+                                <label class="form-check-label" for="manufacturer_{{ characteristic }}">{{ characteristic }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="card-footer text-center">
+            <button type="submit" class="btn btn-primary">Применить фильтр</button>
+        </div>
+    </div>
+</form>

@@ -1,0 +1,28 @@
+<div id="carouselExampleIndicators" class="carousel slide my-4" data-ride="carousel">
+    <ol class="carousel-indicators">
+        {% for image in slider_images %}
+            {% if image.is_active %}
+                <li data-target="#carouselExampleIndicators" data-slide-to="{{ forloop.counter0 }}" {% if forloop.first %}class="active"{% endif %}></li>
+            {% endif %}
+        {% endfor %}
+    </ol>
+    <div class="carousel-inner" role="listbox">
+        {% for image in slider_images %}
+            {% if image.is_active %}
+                <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                    <img class="d-block img-fluid" src="{{ image.image.url }}" alt="{{ image.alt }}">
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+    <a class="carousel-control-prev" href="#carouselExampleIndicators" role="button"
+       data-slide="prev">
+        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        <span class="sr-only">Previous</span>
+    </a>
+    <a class="carousel-control-next" href="#carouselExampleIndicators" role="button"
+       data-slide="next">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        <span class="sr-only">Next</span>
+    </a>
+</div>

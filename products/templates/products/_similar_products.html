@@ -1,0 +1,22 @@
+{% if similar_products.count > 0 %}
+    <div class="container-similar-products container" id="similar_products">
+        <p id="similar-products-title">Похожие товары</p>
+        <div class="glide">
+            <div class="glide__track" data-glide-el="track">
+                <ul class="glide__slides">
+                    {% for product in similar_products %}
+                        {% include 'products/_product_card_carousel.html' %}
+                    {% endfor %}
+                </ul>
+            </div>
+            <!-- Элементы управления -->
+            {% if similar_products.count > 2 %}
+            <div class="glide__controls-wrapper">
+                <div class="glide__arrows" data-glide-el="controls"><button class="glide__arrow glide__arrow--prev" data-glide-dir="<"><</button><button class="glide__arrow glide__arrow--next" data-glide-dir=">">></button>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+{% else %}
+{% endif %}

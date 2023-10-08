@@ -1,0 +1,26 @@
+<div class="modal fade" id="quickviewModal" tabindex="-1" aria-labelledby="quickviewModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="quickviewModalLabel"></h5>
+        <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal_body" style="display: flex; align-items: flex-start;">
+        <div style="flex: 1;">
+          <img class="modal_image" id="modalImage" src="" alt="" width="360" height="360">
+        </div>
+        <div class="modal_description" style="flex: 1;">
+          <p>Цена: <span id="modalPrice"></span></p>
+          <p><span id="modalDescription"></span></p>
+        </div>
+        <div class="modal_characterstics">
+            <p>Характеристики:</p>
+            <div id="characteristicsContainer"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal" aria-label="Close">Закрыть</button>
+      </div>
+    </div>
+  </div>
+</div>

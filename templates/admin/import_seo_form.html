@@ -1,0 +1,10 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+  <form method="post" enctype="multipart/form-data" action="{% url 'seo_import_action' %}">
+    {% csrf_token %}
+    <label for="file">Таблица должна содержать 4 колонки в строгом порядке (page_url, title, meta_description, alt_image)</label>
+    <input type="file" name="file" required>
+    <button type="submit">Import</button>
+  </form>
+{% endblock %}

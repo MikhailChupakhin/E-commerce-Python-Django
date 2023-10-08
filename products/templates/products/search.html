@@ -1,0 +1,65 @@
+{% extends 'products/products.html' %}
+{% load static %}
+
+{% block css %}
+    {{ block.super }}
+{% endblock %}
+
+{% block content %}
+    <div class="container" id="main">
+       <!-- Вывод хлебных крошек -->
+       {% include 'products/_breadcrumbs.html' %}
+        <div class="row">
+            <div class="col-lg-3 d-none d-lg-block">
+                <h1 class="my-4">Store</h1>
+                <div class="list-group">
+                    {% for category in categories %}
+                        <a href="{% url 'products:category' category.slug %}" class="list-group-item">{{ category.name }}</a>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="col-lg-9">
+                <form method="GET" action="{% url 'products:product_search' %}" class="my-4">
+                    <div class="input-group">
+                        <input type="text" name="keyword" class="form-control" placeholder="Введите ключевое слово">
+                        <button type="submit" class="btn btn-primary">Поиск</button>
+                    </div>
+                </form>
+
+                {% if products %}
+                    <h2>Результаты поиска для "{{ keyword }}":</h2>
+                    <div class="row">
+                        {% for product in products %}
+                            {% include 'products/_product_card.html' %}
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p>Ничего не найдено.</p>
+                {% endif %}
+
+                <nav aria-label="Page navigation example">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item {% if not page_obj.has_previous %} disabled {% endif %}">
+                            <a class="page-link"
+                               href="{% if page_obj.has_previous %}{% url 'products:paginator' page_obj.previous_page_number %}{% else %}#{% endif %}"
+                               tabindex="-1" aria-disabled="true">
+                                Предыдущая
+                            </a>
+                        </li>
+                        {% for page in paginator.page_range %}
+                            <li class="page-item">
+                                <a class="page-link" href="{% url 'products:paginator' page %}">
+                                    {{ page }}
+                                </a>
+                            </li>
+                        {% endfor %}
+                        <li class="page-item {% if not page_obj.has_next %} disabled {% endif %}">
+                            <a class="page-link"
+                               href="{% if page_obj.has_next %}{% url 'products:paginator' page_obj.next_page_number %}{% else %}#{% endif %}">Следующая</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+{% endblock %}

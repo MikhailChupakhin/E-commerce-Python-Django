@@ -1,0 +1,31 @@
+{% load static %}
+
+{% block css %}
+    <link rel="stylesheet" href="{% static 'vendor/css/modal_products_wantage.css' %}">
+{% endblock %}
+
+<!-- Модальное окно -->
+<div class="modal fade" id="stock-check-modal" tabindex="-1" role="dialog" aria-labelledby="stock-check-modalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="stock-check-modalLabel">Товары не в наличии</h5>
+                <button id="closeButton" type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="text-block">
+                    <p>К сожалению, некоторых товаров нет в наличии.</p>
+                </div>
+                <!-- Таблица с недоступными товарами, которая будет формироваться в AJAX скрипте -->
+                <div id="unavailable-products-table"></div>
+                <p>Пожалуйста, уменьшите количество товаров в корзине и сохраните изменения!</p>
+            </div>
+            <div class="modal-footer">
+                <button id="confirmButton" type="button" class="btn btn-secondary" data-dismiss="modal">Понятно</button>
+            </div>
+        </div>
+    </div>
+</div>
