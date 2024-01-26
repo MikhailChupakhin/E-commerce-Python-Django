@@ -1,0 +1,34 @@
+{% extends 'products/base.html' %}
+{% load cache static %}
+
+{% block css %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'vendor/css/info-page.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="home">
+        <div class="home_container">
+            <div class="home_background" style="background-image:url(/media/images/categories.jpg); height: 250px; width: 100%;"></div>
+            <div class="home_content_container">
+                <div class="container">
+                    <div class="row">
+                        <div class="col">
+                            <div class="home_content">
+                                <div class="results">{% include 'products/_breadcrumbs.html' %}</div>
+                                <h1>{{ info_page.title }}</h1>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container">
+        <div class="static-page-content">
+            <div class="content-body">
+                {{ info_page.content|safe }}
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% load i18n admin_urls %}
+
+{% block object-tools-items %}
+  {% if has_add_permission %}
+  <li>
+    {% url cl.opts|admin_urlname:'add' as add_url %}
+    <a href="{% add_preserved_filters add_url is_popup to_field %}" class="addlink">
+      {% blocktranslate with cl.opts.verbose_name as name %}Add {{ name }}{% endblocktranslate %}
+    </a>
+  </li>
+      {% if request.path == "/admin/products/product/" %}
+          <li>
+            <a href="{% url 'products_import_action' %}" class="importlink">
+              {% trans 'Import Products from xlsx' %}
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'products_export_action' %}" class="exportlink">
+              {% trans 'Export Products to xlsx' %}
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'generate_xml_feed_yandex' %}" class="exportlink">
+              {% trans 'Gen YML' %}
+            </a>
+          </li>
+      {% elif request.path == "/admin/seo_manager/seoattributes/"  %}
+          <li>
+            <a href="{% url 'seo_import_action' %}" class="importlink">
+              {% trans 'Import SEO from xlsx' %}
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'seo_export_action' %}" class="exportlink">
+              {% trans 'Export SEO to xlsx' %}
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'generate_urls' %}">
+              {% trans 'Generate URLS' %}
+            </a>
+          </li>
+      {% elif request.path == "/admin/products/manufacturer/"  %}
+          <li>
+            <a href="{% url 'transfer_products' %}" class="importlink">
+              {% trans 'Передать товары' %}
+            </a>
+          </li>
+      {% endif %}
+  {% endif %}
+{% endblock %}

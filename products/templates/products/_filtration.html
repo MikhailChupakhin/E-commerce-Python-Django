@@ -1,0 +1,61 @@
+<form method="GET" action="#">
+    <div class="card" id="block-filtration">
+        <div class="sidebar-title text-center">
+            Фильтры
+        </div>
+        <div class="container">
+            <div class="row">
+                <div class="col-6">
+                    <div class="form-group">
+                        <label for="min_price_value">От:</label>
+                        <input type="number" name="min_price_value" id="min_price" class="form-control custom-input"
+                               value="0">
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="form-group">
+                        <label for="max_price_value">До:</label>
+                        <input type="number" name="max_price_value" id="max_price" class="form-control custom-input"
+                               value="1300000">
+                    </div>
+                </div>
+                <div class="col-12 price-slider">
+                    <div id="price-slider"></div>
+                </div>
+            </div>
+
+
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-group form-check availability">
+                        <input type="checkbox" name="in_stock" id="in_stock" class="form-check-input"
+                               {% if in_stock %}checked{% endif %}>
+                        <label class="form-check-label" for="in_stock">Только в наличии</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12">
+                    <p>Производители</p>
+                    <ul class="list-group list-group-flush manufacturer-list" aria-labelledby="manufacturerDropdown">
+                        {% for characteristic in manufacturers %}
+                            <li class="list-group-item">
+                                <input type="checkbox" name="manufacturer[]" id="manufacturer_{{ characteristic }}"
+                                       class="form-check-input" value="{{ characteristic }}"
+                                       {% if characteristic in selected_manufacturers %}checked{% endif %}>
+                                <label class="form-check-label"
+                                       for="manufacturer_{{ characteristic }}">{{ characteristic }}</label>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="filter-btn text-center">
+            <button type="button" id="apply-filter-button" class="btn btn-primary">Применить фильтр</button>
+        </div>
+    </div>
+</form>

@@ -1,0 +1,271 @@
+{% extends 'products/base.html' %}
+{% load cache %}
+{% load static %}
+{% load custom_filters %}
+
+{% block css %}
+    {{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static 'vendor/plugins/OwlCarousel2-2.2.1/owl.carousel.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'vendor/plugins/OwlCarousel2-2.2.1/owl.theme.default.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'vendor/plugins/OwlCarousel2-2.2.1/animate.css' %}">
+{% endblock %}
+
+{% block content %}
+    {% cache 1 "index" %}
+    <div class="home">
+		<div class="home_slider_container">
+
+			<!-- Home Slider -->
+			<div class="owl-carousel owl-theme home_slider">
+                {% for slider in active_sliders %}
+                <div class="owl-item home_slider_item">
+                    <div class="home_slider_background" style="background-image:url({{ slider.image.url }})" alt="{{ slider.alt_text }}"></div>
+                    <div class="home_slider_content_container">
+                            <div class="row">
+                                <div class="col">
+                                    <div class="home_slider_content" data-animation-in="fadeIn" data-animation-out="animate-out fadeOut">
+                                        <div class="home_slider_title">{{ slider.title }}</div>
+                                        <div class="home_slider_subtitle">{{ slider.subtitle }}</div>
+                                        <div class="button button_light home_button"><a href="{% url 'products:index' %}">Начать покупки</a></div>
+                                    </div>
+                                </div>
+                            </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+			<!-- Home Slider Dots -->
+            <div class="home_slider_dots_container">
+                <div class="container">
+                    <div class="row">
+                        <div class="col">
+                            <div class="home_slider_dots">
+                                <ul id="home_slider_custom_dots" class="home_slider_custom_dots">
+                                    {% for slider in active_sliders %}
+                                    <li class="home_slider_custom_dot{% if forloop.first %} active{% endif %}">{{ forloop.counter|add:"0" }}.</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+		</div>
+	</div>
+
+	<!-- Ads -->
+
+	<div class="avds">
+		<div class="avds_container d-flex flex-lg-row flex-column align-items-start justify-content-between">
+			<div class="avds_small">
+				<div class="avds_background" style="background-image:url(/media/images/avds_small.jpg)"></div>
+				<div class="avds_small_inner">
+					<div class="avds_discount_container">
+						<img src="/media/images/discount.png" alt="">
+						<div>
+							<div class="avds_discount">
+								<div>-20<span>%</span></div>
+								<div>Discount</div>
+							</div>
+						</div>
+					</div>
+					<div class="avds_small_content">
+						<div class="avds_title">Скидки!</div>
+						<div class="avds_link"><a href="{% url 'products:discount' %}">Смотреть</a></div>
+					</div>
+				</div>
+			</div>
+			<div class="avds_large">
+				<div class="avds_background" style="background-image:url(/media/images/avds_large.jpg)"></div>
+				<div class="avds_large_container">
+					<div class="avds_large_content">
+						<div class="avds_title">Стробоскопы</div>
+						<div class="avds_text">Откройте мир динамичных визуальных эффектов с нашими передовыми стробоскопами. Подчеркните ритм и атмосферу любого события благодаря множеству настроек и эффектов. Доступные модели для профессиональных мероприятий и домашних вечеринок.</div>
+						<div class="avds_link avds_link_large">
+                            <a href="{% url 'products:subcategory' category_slug='svetovoe-oborudovanie' subcategory_slug='stroboskopy' %}">Смотреть</a>
+                        </div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Products -->
+     <div class="products">
+        <div class="container">
+            <div class="row">
+                <div class="col">
+                    <div class="product_grid">
+                        {% for product in featured_products %}
+                            <div class="product">
+                                <div class="product_image"><img src="{{ product.image.url }}" alt="{{ product.title }}"></div>
+                                {% if product.is_new %}
+                                    <div class="product_extra product_new"><a href="#">New</a></div>
+                                {% endif %}
+                                <div class="product_content">
+                                    <div class="product_title">
+                                        <a href="{% url 'products:product_detail' product_slug=product.slug product_id=product.id %}">
+                                            {{ product.name }}
+                                        </a>
+                                    </div>
+									{% if product.discount_price %}
+                                        <div class="product_price">{{ product.discount_price|floatformat:2|comma_to_dot }} ₽</div>
+									{% else %}
+									    <div class="product_price">{{ product.price|floatformat:2|comma_to_dot }} ₽</div>
+									{% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+	<!-- Ad -->
+
+	<div class="avds_xl">
+		<div class="container">
+			<div class="row">
+				<div class="col">
+					<div class="avds_xl_container clearfix">
+						<div class="avds_xl_background" style="background-image:url(/media/images/avds_xl.jpg)"></div>
+						<div class="avds_xl_content">
+							<div class="avds_title">Генераторы дыма</div>
+							<div class="avds_text">Придайте своим событиям визуальную магию! Создайте удивительные моменты благодаря игре света и тумана. Эти устройства поднимут атмосферу до новых высот!</div>
+							<div class="avds_link avds_xl_link"><a href="{% url 'products:subcategory' category_slug='spetsialnye-effekty' subcategory_slug='generatory-dyma' %}">Смотреть</a></div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Icon Boxes -->
+
+	<div class="icon_boxes">
+		<div class="container">
+			<div class="row icon_box_row">
+				
+				<!-- Icon Box -->
+				<div class="col-lg-4 icon_box_col">
+					<div class="icon_box">
+						<div class="icon_box_image"><img src="/media/images/icon_1.svg" alt=""></div>
+						<div class="icon_box_title">Free Shipping Worldwide</div>
+						<div class="icon_box_text">
+							<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam a ultricies metus. Sed nec molestie.</p>
+						</div>
+					</div>
+				</div>
+
+				<!-- Icon Box -->
+				<div class="col-lg-4 icon_box_col">
+					<div class="icon_box">
+						<div class="icon_box_image"><img src="/media/images/icon_2.svg" alt=""></div>
+						<div class="icon_box_title">Free Returns</div>
+						<div class="icon_box_text">
+							<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam a ultricies metus. Sed nec molestie.</p>
+						</div>
+					</div>
+				</div>
+
+				<!-- Icon Box -->
+				<div class="col-lg-4 icon_box_col">
+					<div class="icon_box">
+						<div class="icon_box_image"><img src="/media/images/icon_3.svg" alt=""></div>
+						<div class="icon_box_title">24h Fast Support</div>
+						<div class="icon_box_text">
+							<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam a ultricies metus. Sed nec molestie.</p>
+						</div>
+					</div>
+				</div>
+
+			</div>
+		</div>
+	</div>
+
+	<!-- Newsletter -->
+
+	<div class="newsletter">
+		<div class="container">
+			<div class="row">
+				<div class="col">
+					<div class="newsletter_border"></div>
+				</div>
+			</div>
+			<div class="row">
+                <div class="col-lg-8 offset-lg-2">
+                    <div class="newsletter_content text-center">
+                        <div class="newsletter_title">Подпишитесь на наши новости!</div>
+                        <div class="newsletter_text">
+                            <p>Оставьте адрес электронной почты - мы будем держать Вас в курсе о проводимых акциях и новинках.</p>
+                        </div>
+                        <div class="newsletter_form_container">
+                            <form action="{% url 'users:subscribe_news' %}" method="post"id="newsletter_form" class="newsletter_form">
+                                {% csrf_token %}
+                                <input type="email" class="newsletter_input" id="id_email" required="required">
+                                <button type="button" class="newsletter_button trans_200" id="subscribe_button" data-csrf-token="{{ csrf_token }}">
+                                    <span>Подписаться</span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+		</div>
+	</div>
+
+    <div class="headers-container">
+        <h1>Интернет-магазин световой и музыкальной техники IMSOUND</h1>
+        <p>
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam a ultricies metus. Sed nec molestie.Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam a ultricies metus. Sed nec molestie.Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam a ultricies metus. Sed nec molestie.
+        </p>
+        <h2>Ассортимент магазина</h2>
+        <p>
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam a ultricies metus. Sed nec molestie.Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam a ultricies metus. Sed nec molestie.Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam a ultricies metus. Sed nec molestie.
+        </p>
+        <p>
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+        </p>
+        <ul>
+            <li>Архитектурные и профильные прожекторы</li>
+            <li>Стробоскопы</li>
+            <li>Поворотные головы</li>
+            <li>Микшерные пульты</li>
+        </ul>
+        <p>
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam a ultricies metus. Sed nec molestie.Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam a ultricies metus. Sed nec molestie.Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam a ultricies metus. Sed nec molestie.
+        </p>
+        <h2> Lorem ipsum dolor sit amet, consectetur adipiscing elit.</h2>
+        <p>
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam a ultricies metus. Sed nec molestie.Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam a ultricies metus. Sed nec molestie.Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam a ultricies metus. Sed nec molestie.
+        </p>
+        <p>
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam a ultricies metus. Sed nec molestie.Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam a ultricies metus. Sed nec molestie.Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam a ultricies metus. Sed nec molestie.<br>
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam a ultricies metus. Sed nec molestie.Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam a ultricies metus. Sed nec molestie.Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam a ultricies metus. Sed nec molestie.
+        </p>
+        <p>
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam a ultricies metus. Sed nec molestie.Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam a ultricies metus. Sed nec molestie.Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam a ultricies metus. Sed nec molestie.
+        </p>
+        <h2>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</h2>
+        <p>
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam a ultricies metus. Sed nec molestie.Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam a ultricies metus. Sed nec molestie.Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam a ultricies metus. Sed nec molestie.
+        </p>
+        <p>
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam a ultricies metus. Sed nec molestie.Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam a ultricies metus. Sed nec molestie.Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam a ultricies metus. Sed nec molestie.
+        </p>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.slim.min.js"></script>
+    <script src="{% static 'vendor/plugins/OwlCarousel2-2.2.1/owl.carousel.js' %}"></script>
+    <script src="{% static 'vendor/plugins/greensock/TweenMax.min.js' %}"></script>
+    <script src="{% static 'vendor/plugins/greensock/TimelineMax.min.js' %}"></script>
+    <script src="{% static 'vendor/plugins/Isotope/isotope.pkgd.min.js' %}"></script>
+    <script src="{% static 'vendor/plugins/scrollmagic/ScrollMagic.min.js' %}"></script>
+    <script src="{% static 'vendor/plugins/greensock/ScrollToPlugin.min.js' %}"></script>
+    <script src="{% static 'vendor/plugins/parallax-js-master/parallax.min.js' %}"></script>
+    <script src="{% static 'vendor/js/subscription.js' %}"></script>
+    {% endcache %}
+{% endblock  %}

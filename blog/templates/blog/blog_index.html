@@ -1,0 +1,94 @@
+{% extends 'products/base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block css %}
+    <!-- Google Font -->
+<!--    <link href="https://fonts.googleapis.com/css2?family=Cookie&display=swap" rel="stylesheet">-->
+<!--    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap"rel="stylesheet">-->
+
+    <!-- Css Styles -->
+    <link rel="stylesheet" href="{% static 'vendor/css/ionicons.min.css' %}">
+    <link rel="stylesheet" href="{% static 'vendor/blog/css/bootstrap.min.css' %}" type="text/css">
+    <link rel="stylesheet" href="{% static 'vendor/blog/css/font-awesome.min.css' %}" type="text/css">
+    <link rel="stylesheet" href="{% static 'vendor/blog/css/elegant-icons.css' %}" type="text/css">
+    <link rel="stylesheet" href="{% static 'vendor/blog/css/jquery-ui.min.css' %}" type="text/css">
+    <link rel="stylesheet" href="{% static 'vendor/blog/css/magnific-popup.css' %}" type="text/css">
+    <link rel="stylesheet" href="{% static 'vendor/blog/css/slicknav.min.css' %}" type="text/css">
+    <link rel="stylesheet" href="{% static 'vendor/blog/css/style.css' %}" type="text/css">
+{% endblock %}
+
+{% block content %}
+    <!-- Breadcrumb Begin -->
+    <div class="breadcrumb-option">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="breadcrumb__links">
+                        <a href="{% url 'products:index' %}"><i class="fa fa-home"></i>Главная</a>
+                        <span>Блог</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Breadcrumb End -->
+    <!-- Blog Section Begin -->
+    <section class="blog spad">
+        <div class="container">
+            <div class="row">
+                {% for article in page %}
+                    <div class="col-lg-4 col-md-4 col-sm-6">
+                        <div class="blog__item">
+                            <div class="blog__item__pic">
+                                <img src="{{ article.image.url }}" alt="">
+                            </div>
+                            <div class="blog__item__text">
+                                <h6><a href="{% url 'blog:article_detail' slug=article.slug %}">{{ article.title }}</a></h6>
+                                <ul>
+                                    <li>Автор - <span>{{ article.author }}</span></li>
+                                    <li>{{ article.date }}</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+
+            </div>
+        </div>
+
+    </section>
+    <!-- Blog Section End -->
+    <!-- Pagination area start -->
+    <div class="pro-pagination-style text-center mtb-50px">
+        <ul class="pagination justify-content-center">
+            <li class="page-item {% if not page.has_previous %} disabled {% endif %}">
+                <a class="page-link"
+                   href="{% if page.has_previous %}?page={{ page.previous_page_number }}{% endif %}"
+                   tabindex="-1" aria-disabled="true">
+                    <i class="fa-arrow-left"><svg xmlns="http://www.w3.org/2000/svg" height="0.625em" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path d="M9.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.2 288 416 288c17.7 0 32-14.3 32-32s-14.3-32-32-32l-306.7 0L214.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z" fill="#2968d6"/></svg></i>
+                </a>
+            </li>
+            {% for page_num in page.paginator.page_range %}
+            <li class="page-item {% if page.number == page_num %} active {% endif %}">
+                <a class="page-link" href="?page={{ page_num }}">{{ page_num }}</a>
+            </li>
+            {% endfor %}
+            <li class="page-item {% if not page.has_next %} disabled {% endif %}">
+                <a class="page-link"
+                   href="{% if page.has_next %}?page={{ page.next_page_number }}{% endif %}"
+                   tabindex="-1" aria-disabled="true">
+                    <i class="fa-arrow-right"><svg xmlns="http://www.w3.org/2000/svg" height="0.625em" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path d="M438.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-160-160c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L338.8 224 32 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l306.7 0L233.4 393.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l160-160z" fill="#2968d6"/></svg></i>
+                </a>
+            </li>
+        </ul>
+    </div>
+    <!-- Pagination area end -->
+
+    <script src="https://cdn.jsdelivr.net/npm/@glidejs/glide"></script>
+
+    <!-- Custom scripts -->
+    <script src="{% static 'vendor/blog/js/bootstrap.min.js' %}"></script>
+
+
+{% endblock %}

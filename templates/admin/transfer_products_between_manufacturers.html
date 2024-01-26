@@ -1,0 +1,26 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+  <form method="post" action="{% url 'transfer_products' %}">
+    {% csrf_token %}
+    <div>
+      <label for="from_manufacturer">Перевести товары от производителя:</label>
+      <select id="from_manufacturer" name="from_manufacturer">
+        {% for manufacturer in manufacturers %}
+          <option value="{{ manufacturer.id }}">{{ manufacturer.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label for="to_manufacturer">в производителя:</label>
+      <select id="to_manufacturer" name="to_manufacturer">
+        {% for manufacturer in manufacturers %}
+          <option value="{{ manufacturer.id }}">{{ manufacturer.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <button type="submit">Выполнить трансфер товаров</button>
+    </div>
+  </form>
+{% endblock %}

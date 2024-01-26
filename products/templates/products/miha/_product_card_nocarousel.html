@@ -1,0 +1,28 @@
+<div class="col-md-3">
+    <div class="card-body" id="product_card_nocarousel">
+        <img src="{{ product.preview.url }}" class="card-img-top" alt="{{ product.name }}">
+        <a href="{% url 'products:product_detail' product_slug=product.slug product_id=product.id %}" class="card-title">{{ product.name }}</a>
+        <h5>{{ product.price }} руб.</h5>
+        <div class="quantity-section text-center">
+            <div class="quantity-input-container">
+                <button class="quantity-btn decrease">-</button>
+                <input type="number" class="quantity-input grid-mode" id="quantity_{{ product.id }}" name="quantity" min="1" value="1" data-product-price="{{ product.price }}" data-product-id="{{ product.id }}">
+                <button class="quantity-btn increase">+</button>
+            </div>
+        </div>
+        <div class="total-price-section text-center">
+            <p>Итоговая стоимость:</p>
+            <p id="totalPrice_{{ product.id }}" data-product-price="{{ product.price }}">{{ product.price }} р.</p>
+        </div>
+        <div class="card-footer text-center">
+            {% if user.is_authenticated %}
+            <a class="btn btn-outline-success add-to-cart" href="#"
+               data-product-id="{{ product.id }}">
+                В корзину
+            </a>
+            {% else %}
+            <a class="btn btn-outline-success" href="{% url 'users:login' %}">Войдите, чтобы добавить в корзину</a>
+            {% endif %}
+        </div>
+    </div>
+</div>

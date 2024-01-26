@@ -1,0 +1,53 @@
+/* Стилизация для контейнера продукта */
+.product {
+    border: 3px solid yelow;
+}
+
+/* Стилизация для изображения продукта */
+.product_image img {
+    border: 1px solid green;
+}
+
+/* Стилизация для контента продукта */
+.product_content {
+    border: 1px solid purple;
+}
+
+/* Стилизация для названия продукта */
+.product_title a {
+    border: 1px solid #999;
+}
+
+/* Стилизация для цены продукта */
+.product_price {
+    border: 1px solid red;
+}
+
+/* Стилизация для футера карты продукта */
+.card-footer {
+    border: 1px solid #ddd;
+
+}
+
+/* Стилизация для кнопок */
+.btn {
+    padding: 5px 10px;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+/* Стилизация для кнопок добавления в корзину и купить в один клик */
+.add-to-basket-btn,
+.buy-in-one-click-btn {
+    background-color: #2ecc71;
+    color: #fff;
+}
+
+/* Стилизация для кнопки при отсутствии товара в наличии */
+.buy-in-one-click-btn.disabled {
+    background-color: #ccc;
+    color: #888;
+    cursor: not-allowed;
+}
+

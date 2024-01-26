@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+{% load custom_filters %}
+
+<yml_catalog date="{{ current_datetime }}">
+    <shop>
+        <name>Imsound</name>
+        <company>ООО "IMSOUND"</company>
+        <url>{{ DOMAIN_NAME }}</url>
+        <categories>
+            {% for category in categories %}
+                <category id="{{ category.id }}">{{ category.name }}</category>
+                {% for subcategory in category.get_subcategories %}
+                    <category id="1000{{ subcategory.id }}" parentId="{{ category.id }}">{{ subcategory.name }}</category>
+                {% endfor %}
+            {% endfor %}
+        </categories>
+        <offers>
+            {% for product in products %}
+                <offer id="{{ product.id }}" available="true">
+                    <url>{{ DOMAIN_NAME }}{{ product.get_absolute_url }}</url>
+                    <price>{{ product.price|floatformat:2|comma_to_dot }}</price>
+                    <currencyId>RUB</currencyId>
+                    <categoryId>1000{{ product.sub_category.id }}</categoryId>
+                    <picture>{{ product.image }}</picture>
+                    <name>{{ product.name }}</name>
+                </offer>
+            {% endfor %}
+        </offers>
+    </shop>
+</yml_catalog>

@@ -1,0 +1,162 @@
+{% extends 'products/base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block css %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'vendor/css/cart_noauth.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'vendor/css/cart.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'vendor/css/cart_responsive.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="home">
+    <div class="home_container">
+        <div class="home_background" style="background-image:url('/media/images/cart.jpg')"></div>
+        <div class="home_content_container">
+            <div class="container">
+                <div class="row">
+                    <div class="col">
+                        <div class="home_content">
+                            <div class="results">{% include 'products/_breadcrumbs.html' %}</div>
+                            <h1>Корзина</h1>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="cart_info">
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <!-- Column Titles -->
+                <div class="cart_info_columns clearfix">
+                    <div class="cart_info_col cart_info_col_product">Наименование</div>
+                    <div class="cart_info_col cart_info_col_price">Стоимость</div>
+                    <div class="cart_info_col cart_info_col_quantity">Количество</div>
+                    <div class="cart_info_col cart_info_col_total">Сумма</div>
+                </div>
+            </div>
+        </div>
+            <div class="row cart_items_row">
+                <div class="col">
+					<!-- Cart Item -->
+					<input type="hidden" id="user-id" value="{{ user.id }}">
+                    {% if baskets %}
+                    {% csrf_token %}
+                    {% for basket in baskets %}
+					<div class="cart_item d-flex flex-lg-row flex-column align-items-lg-center align-items-start justify-content-start" data-product-id="{{ basket.product.id }}">
+						<!-- Name -->
+						<div class="cart_item_product d-flex flex-row align-items-center justify-content-start">
+							<div class="cart_item_image">
+								<div><img src="{{ basket.product.image.url }}" alt="" width="180" height="180"></div>
+							</div>
+							<div class="cart_item_name_container">
+								<div class="cart_item_name"><a href="#">{{ basket.product.name }}</a></div>
+							</div>
+						</div>
+						<!-- Price -->
+						<div class="cart_item_price">{{ basket.product.total_price|floatformat:2|comma_to_dot }}</div>
+						<!-- Quantity -->
+						<div class="cart_item_quantity">
+							<div class="product_quantity_container">
+								<div class="product_quantity clearfix">
+									<input class="quantity_input" data-product-id="{{ basket.product.id }}" type="number" value="{{ basket.quantity }}" min="1" readonly>
+									<div class="quantity_buttons">
+										<div id="quantity_inc_button" class="quantity_inc quantity_control quantity-change-btn" data-type="increase" data-product-id="{{ basket.product.id }}"><i class="fa fa-chevron-up" aria-hidden="true"></i></div>
+										<div id="quantity_dec_button" class="quantity_dec quantity_control quantity-change-btn" data-type="decrease" data-product-id="{{ basket.product.id }}"><i class="fa fa-chevron-down" aria-hidden="true"></i></div>
+									</div>
+								</div>
+							</div>
+						</div>
+						<!-- Total -->
+						<div class="cart_item_total" data-product-id="{{ basket.product.id }}">{{ basket.quantity|multiply:basket.product.total_price|floatformat:2|comma_to_dot }}</div>
+						<div class="delete-icon">
+                            <button class="delete-btn" data-product-id="{{ basket.product.id }}">
+                                <!-- Заменить на нормальную иконку -->
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="darkred" class="bi bi-trash" viewBox="0 0 16 16">
+                                    <path d="M4 1a1 1 0 0 1 1 1v1h6V2a1 1 0 0 1 2 0v1h2a1 1 0 0 1 1 1v1a1 1 0 0 1-1 1h-.293l-.541 9.156A2 2 0 0 1 12.174 16H3.826a2 2 0 0 1-1.992-1.844L1.293 6H1a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h2V2a1 1 0 0 1 1-1h6V1H4zm1 2h6v1H5V3zM3.293 6l.541 9.156A1 1 0 0 0 4.826 16h7.348a1 1 0 0 0 .992-.844L12.707 6H3.293zM8 8a1 1 0 0 1 1 1v3a1 1 0 1 1-2 0V9a1 1 0 0 1 1-1zm3 0a1 1 0 0 1 1 1v3a1 1 0 0 1-2 0V9a1 1 0 0 1 1-1z"/>
+                                </svg>
+                                <!-- Конец кода SVG -->
+                            </button>
+                        </div>
+					</div>
+                    {% endfor %}
+                    {% else %}
+                    <p>Ваша корзина пуста</p>
+                    {% endif %}
+
+				</div>
+			</div>
+            <div class="row row_cart_buttons">
+				<div class="col">
+					<div class="cart_buttons d-flex flex-lg-row flex-column align-items-start justify-content-start">
+						<div class="button continue_shopping_button"><a href="{% url 'products:index' %}">Продолжить покупки</a></div>
+						<div class="cart_buttons_right ml-lg-auto">
+
+						</div>
+					</div>
+				</div>
+			</div>
+            <div class="row row_extra">
+				<div class="col-lg-4">
+
+					<!-- Delivery -->
+					<div class="delivery">
+						<div class="section_title">Доставка</div>
+
+						<div class="delivery_options">
+							{% for delivery_method in delivery_methods %}
+                                <label class="delivery_option clearfix">
+                                    {{ delivery_method.name }}
+                                    <input type="radio" name="radio" data-delivery-method-id="{{ delivery_method.id }}"
+										   data-delivery-price="{{ delivery_method.price }}" {% if forloop.first %}checked{% endif %}>
+                                    <span class="checkmark"></span>
+                                    <span class="delivery_price">{{ delivery_method.price|floatformat:2|comma_to_dot }}</span>
+                                </label>
+                            {% endfor %}
+						</div>
+					</div>
+
+					<!-- Coupon Code -->
+					<div class="coupon">
+						<div class="coupon_form_container">
+							<form action="#" id="coupon_form" class="coupon_form">
+								<input type="text" class="coupon_input" required="required" placeholder="Укажите промо-код, если есть">
+								<button class="button coupon_button" id="apply_coupon_button"><span>Применить</span></button>
+							</form>
+						</div>
+					</div>
+				</div>
+
+				<div class="col-lg-6 offset-lg-2">
+					<div class="cart_total">
+						<div class="section_title">Итог</div>
+
+						<div class="cart_total_container">
+							<ul>
+								<li class="d-flex flex-row align-items-center justify-content-start">
+									<div class="cart_total_title">Товары</div>
+									<div class="cart_total_value cart_items_total_price ml-auto">{{ order_total_price|floatformat:2|comma_to_dot }}</div>
+								</li>
+								<li class="d-flex flex-row align-items-center justify-content-start">
+									<div class="cart_total_title">Доставка</div>
+									<div class="cart_total_value selected_delivery_price ml-auto" id="selected_delivery_price">{{ 0|floatformat:2|comma_to_dot }}</div>
+								</li>
+								<li class="d-flex flex-row align-items-center justify-content-start">
+									<div class="cart_total_title">Сумма</div>
+									<div class="cart_total_value order_total_price ml-auto">{{ order_total_price|floatformat:2|comma_to_dot }}</div>
+								</li>
+							</ul>
+						</div>
+						<div class="button checkout_button" id="checkout-button"><a>Перейти к оформлению</a></div>
+					</div>
+				</div>
+			</div>
+    </div>
+</div>
+    <script src="{% static 'vendor/js/cart_user.js' %}"></script>
+    <script src="{% static 'vendor/js/promo-code.js' %}"></script>
+{% endblock %}

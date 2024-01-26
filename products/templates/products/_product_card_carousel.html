@@ -1,0 +1,48 @@
+{% load custom_filters %}
+<div class="product-card-container glide__slide" data-glide-slide-id="slide_{{ forloop.counter }}">
+    <div class="product-card" id="carousel_product_card">
+        <a href="{% url 'products:product_detail' product_slug=product.slug product_id=product.id %}" class="card-link">
+            <img src="{{ product.image.url }}" alt="{{ product.name }} изображение" class="card-img-top">
+            <span class="card-title">{{ product.name }}</span>
+        </a>
+        <div class="price-section {% if not product.discount_price %}no-discount{% endif %}">
+            {% if product.price == 1000000 %}
+                <p style="text-align: center;">ЦЕНА: ПО ЗАПРОСУ</p>
+            {% else %}
+                {% if product.discount_price %}
+                    <p class="price-discount text-center">{{ product.price|floatformat:2|comma_to_dot }}</p>
+                    <p class="price text-center">{{ product.total_price|floatformat:2|comma_to_dot }}</p>
+                {% else %}
+                    <p class="price text-center">{{ product.total_price|floatformat:2|comma_to_dot }}</p>
+                {% endif %}
+            {% endif %}
+            {% if product.price == 1000000 %}
+                <div class="placeholder"></div>
+            {% else %}
+                <div class="quantity-section text-center">
+                    <div class="quantity-input-container" data-card-type="additional">
+                        <label for="quantity_{{ product.id }}">QTY</label>
+                        <button class="quantity-btn decrease">-</button>
+                        <input type="number" class="quantity-input grid-mode" id="quantity_{{ product.id }}" name="quantity" min="1" value="1" data-product-price="{{ product.price }}" data-product-id="{{ product.id }}" readonly>
+                        <button class="quantity-btn increase">+</button>
+                    </div>
+                </div>
+            {% endif %}
+            <div class="total-price-section hidden text-center">
+                <p>Итоговая стоимость:</p>
+                <p class="total_price" id="totalPrice_{{ product.id }}" data-product-price="{{ product.total_price }}">{{ product.price|floatformat:2|comma_to_dot }}</p>
+            </div>
+        </div>
+        <div class="text-center">
+            {% if user.is_authenticated %}
+            <div class="cart-btn">
+                <button type="submit" class="add-to-cart btn btn-primary" data-product-id="{{ product.id }}" data-authenticated="1">В корзину</button>
+            </div>
+            {% else %}
+            <div class="cart-btn">
+                <button type="submit" class="add-to-cart btn btn-primary" data-product-id="{{ product.id }}" data-product-name="{{ product.name }}" data-product-quantity="{{ product.quantity }}" data-authenticated="0">В корзину</button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>

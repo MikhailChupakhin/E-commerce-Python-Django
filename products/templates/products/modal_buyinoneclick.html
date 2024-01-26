@@ -1,0 +1,35 @@
+<div class="modal fade" id="buyInOneClickModal" tabindex="-1" role="dialog" aria-labelledby="buyInOneClickModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="buyInOneClickModalLabel">Купить в один клик</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Форма для ввода данных -->
+                <form id="buyInOneClickForm">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="nameInput">Имя</label>
+                        <input type="text" class="form-control" id="nameInput" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="phoneInput">Телефон</label>
+                        <input type="text" class="form-control" id="phoneInput" name="phone" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="emailInput">Адрес электронной почты</label>
+                        <input type="email" class="form-control" id="emailInput" name="email" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+                <button type="button" class="btn btn-primary" onclick="submitBuyInOneClickForm()" data-product-id="{{ product.id }}">Отправить</button>
+            </div>
+        </div>
+    </div>
+</div>
+

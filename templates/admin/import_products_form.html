@@ -1,0 +1,10 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+  <form method="post" enctype="multipart/form-data" action="{% url 'products_import_action' %}">
+    {% csrf_token %}
+    <label for="file">Таблица должна содержать 6 колонок в строгом порядке (name, manufacturer, description, price, category_name, subcategory_name)</label>
+    <input type="file" name="file" required>
+    <button type="submit">Import</button>
+  </form>
+{% endblock %}

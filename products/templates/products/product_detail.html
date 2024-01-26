@@ -1,0 +1,293 @@
+{% extends 'products/base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block css %}
+    {{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static 'vendor/css/product_detail.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'vendor/css/product_responsive.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="home">
+        <div class="home_container">
+            <div class="home_background" style="background-image:url(/media/images/categories.jpg); height: 200px; width: 100%;"></div>
+            <div class="home_content_container">
+                <div class="container">
+                    <div class="row">
+                        <div class="col">
+                            <div class="home_content">
+                                <div class="results breadcrumbs-product-details">{% include 'products/_breadcrumbs.html' %}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Product Details -->
+
+	<div class="product_details">
+		<div class="container">
+			<div class="row details_row">
+                <div class="col-12">
+                    <h1 class="details_name text-center">{{ product.name }}</h1>
+                </div>
+
+				<!-- Product Image -->
+                <div class="col-lg-6 col-md-12">
+                    <div class="details_image">
+                        <div class="details_image_large">
+                            <img src="{{ product.image.url }}" alt="" id="mainImage" class="adaptive-image">
+                            {% if product.is_new %}
+                                <div class="product_extra product_new">
+                                    <a>Новинка</a>
+                                </div>
+                            {% endif %}
+                        </div>
+                        {% if product.alter_image.exists %}
+                            <div class="details_image_thumbnails d-flex flex-row align-items-start justify-content-between">
+                                {% for alter_image in product.alter_image.all %}
+                                    <div class="details_image_thumbnail active alter-image" style="width: calc((100% - 51px) / 4); height: width; cursor: pointer;">
+                                        <img src="{{ alter_image.image.url }}" alt="{{ product.name }}">
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+				<!-- Product Content -->
+				<div class="col-lg-6 col-md-12">
+					<div class="details_content">
+                        <div class="manufacturer_container">
+                            <div class="row">
+                                <div class="col-6 col-md-6">
+							        <h2 class="h2 section-title">Производитель</h2>
+                                </div>
+                                <div class="col-6 col-md-6 justify-flex-end">
+                                    <h2 class="h2 section-title">{{ product.manufacturer }}</h2>
+						        </div>
+                            </div>
+                        </div>
+                        <div class="price-section-main">
+                            <div class="row">
+                                <div class="col-3 col-md-6 col-d-6">
+                                    <h2 class="h2 section-title">Цена</h2>
+                                </div>
+                                <div class="col-9 col-md-6 text-right">
+                                    {% if product.price == 1000000 %}
+                                         <div class="details_noprice section-title"><strong>ПО ЗАПРОСУ</strong></div>
+                                    {% else %}
+                                        {% if product.discount_price %}
+						                    <div class="details_discount">{{ product.price|floatformat:2|comma_to_dot }}</div>
+						                    <div class="details_price">{{ product.total_price|floatformat:2|comma_to_dot }}</div>
+                                        {% else %}
+                                            <div class="details_price">{{ product.total_price|floatformat:2|comma_to_dot }}</div>
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Product Quantity -->
+                        {% if product.price == 1000000 %}
+                            <div class="placeholder"></div>
+                        {% else %}
+                            <div class="row">
+                                <div class="col-6 col-md-6 col-d-6">
+                                    <h3 class="h3 section-title">Количество</h3>
+                                </div>
+                                <div class="col-6 col-md-6 col-d-6 text-right">
+                                    <div class="product_quantity_container">
+                                        <div class="quantity-section text-center">
+                                            <div class="quantity-input-container main" data-card-type="main">
+                                                <button class="quantity-btn decrease"><span class="quantity-inner">-</span></button>
+                                                <input type="number" class="quantity-input grid-mode" id="quantity_{{ product.id }}" name="quantity" min="1" value="1" data-product-price="{{ product.total_price }}" data-product-id="{{ product.id }}" readonly>
+                                                <button class="quantity-btn increase"><span class="quantity-inner">+</span></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <div class="total-price-section-main" style="visibility: hidden; width: 100%; height: 57px;">
+                            <div class="row">
+                                <div class="col-3 col-md-6">
+                                    <h4 class="h4 section-title">Итог</h4>
+                                </div>
+                                <div class="col-9 col-md-6 text-right">
+                                    <p class="total_price" id="totalPrice_{{ product.id }}" data-product-price="{{ product.total_price }}">{{ product.total_price|floatformat:2|comma_to_dot }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Average Rating -->
+                        <div class="rating_container">
+                            <div class="row">
+                                <div class="col-6 col-md-6">
+							        <div class="small-section-title">Рейтинг товара</div>
+                                </div>
+                                <div class="col-6 col-md-6 justify-flex-end">
+                                   {% if average_rating %}
+                                       <span class="star-rating">{{ average_rating|star_rating }}</span>
+                                   {% else %}
+                                       <span>Нет оценок</span>
+                                   {% endif %}
+						        </div>
+                            </div>
+                        </div>
+
+						<!-- In Stock -->
+                        <div class="in_stock_container">
+                            <div class="row">
+                                <div class="col-6 col-md-6">
+							        <div class="small-section-title">Наличие:</div>
+							        <span>{{ product.quantity }}</span>
+                                </div>
+                                <div class="col-6 col-md-6 justify-flex-end">
+							        <div class="availability">Артикул:</div>
+                                    <span>{{ product.article_number }}</span>
+						        </div>
+                            </div>
+                        </div>
+
+                        <!-- Product Cart -->
+                        <div class="buy-buttons">
+                            <div class="row">
+                                <div class="col-6 col-md-6">
+                                    <a class="btn btn-primary buy-in-one-click-btn" href="#" data-toggle="modal" data-target="#buyInOneClickModal" data-product-id="{{ product.id }}" onclick="passProductId(this)">
+                                        Купить в один клик
+                                    </a>
+                                </div>
+                                <div class="col-6 col-md-6 justify-flex-end">
+                                    {% if user.is_authenticated %}
+                                    <a>
+                                        <button type="submit" class="add-to-cart btn btn-primary" data-product-id="{{ product.id }}" data-authenticated="1">В корзину</button>
+                                    </a>
+                                    {% else %}
+                                    <div class="cart-btn">
+                                        <button type="submit" class="add-to-cart btn btn-primary" data-product-id="{{ product.id }}" data-product-name="{{ product.name }}" data-product-quantity="{{ product.quantity }}" data-authenticated="0">В корзину</button>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+						</div>
+                        <!-- Products Characteristics -->
+						<div class="details_text">
+							{% if product_characteristics %}
+                                <div class="characteristics-section">
+                                    <h4 class="h4 section-title">Характеристики:</h4>
+                                    <table class="characteristics-table">
+                                        <tbody>
+                                        {% for name, value in product_characteristics.items %}
+                                        <tr>
+                                            <td>{{ name }}:</td>
+                                            <td>{{ value }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% endif %}
+						</div>
+
+					</div>
+				</div>
+			</div>
+
+			<div class="row">
+                <div class="col-lg-12">
+                    <div class="description-section">
+                        <div class="section-buttons">
+                            <button class="section-button active" data-section="description" onclick="toggleSection('description')">Описание</button>
+                            <button class="section-button" data-section="reviews" onclick="toggleSection('reviews')">Отзывы</button>
+                        </div>
+                        <div class="card-text" id="description">
+                            {% if product.description %}
+                                {{ product.description|safe }}
+                            {% else %}
+                                <p>Товару пока не добавлено описания.</p>
+                            {% endif %}
+                        </div>
+                        <div class="card-text" id="reviews" style="display: none;">
+                            {% if reviews %}
+                            {% for review in reviews %}
+                            <div class="review">
+                                <div class="review-header">
+                                    <div class="review-user-rating">
+                                        <div class="review-user">{{ review.user }}</div>
+                                        <div class="review-rating"><span class="star-rating">{{ review.rating|star_rating }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="review-content">
+                                    {% if review.pros %}
+                                    <div class="review-pros">Достоинства: {{ review.pros }}</div>
+                                    {% endif %}
+                                    {% if review.cons %}
+                                    <div class="review-cons">Недостатки: {{ review.cons }}</div>
+                                    {% endif %}
+                                    {% if review.text_comment %}
+                                    <div class="review-comment">Комментарий: {{ review.text_comment }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <hr class="review-separator">
+                            {% endfor %}
+                            <a href="{% url 'reviews:add_review'  category_slug=product.category.slug subcategory_slug=product.sub_category.slug product_slug=product.slug  %}" class="leave-review-button">Оставить отзыв</a>
+                            {% else %}
+                            <p>У этого товара пока нет отзывов. Оставьте первый отзыв!</p>
+                            <a href="{% url 'reviews:add_review'  category_slug=product.category.slug subcategory_slug=product.sub_category.slug product_slug=product.slug  %}" class="leave-review-button">Оставить отзыв</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+		</div>
+
+        <div class="call-me-container container" id="call-me">
+            <div class="row">
+                <div class="col-lg-4 call-me-left">
+                    <div class="call_me_image">
+                        <img src="/media/site_assets/hotline.webp" alt="Фотография" class="call-me__image">
+                    </div>
+                </div>
+                <div class="col-lg-4 call-me-center">
+                    <div class="call-me__title">Затрудняетесь с выбором?</div>
+                    <div class="call-me__text">
+                        Наш консультант поможет Вам в подборе оборудования,
+                        а также ответит на любые вопросы о нашей продукции!
+                    </div>
+                </div>
+                <div class="col-lg-4 call-me-right">
+                    <div class="call-me__title">+1 234 567 890</div>
+                    <button class="btn-call-me" data-toggle="modal" data-target="#CallbackModal">Перезвоните мне</button>
+                </div>
+                <div id="notification" class="notification"></div>
+            </div>
+        </div>
+
+        {% include 'products/_recommended_products.html' %}
+        {% include 'products/_similar_products.html' %}
+        {% include 'products/_viewed_products.html' %}
+    </div>
+
+    {% include 'products/modal_buyinoneclick.html' %}
+    {% include 'products/modal_callback.html' %}
+
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/@glidejs/glide/dist/css/glide.core.min.css" async>
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/@glidejs/glide/dist/css/glide.theme.min.css"async>
+    <link rel="stylesheet" type="text/css" href="{% static 'vendor/css/additional_products.css' %}" async>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.slim.min.js"></script>
+    <!-- Custom scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@glidejs/glide"></script>
+    <script src="{% static 'vendor/js/product_details_updater_totalprice.js' %}"></script>
+    <script src="{% static 'vendor/js/products_details_descr_reviews_switch.js' %}"></script>
+    <script src="{% static 'vendor/js/add_product_to_cart.js' %}"></script>
+    <script src="{% static 'vendor/js/callback.js' %}"></script>
+    <script src="{% static 'vendor/js/buyinoneclick_details.js' %}"></script>
+    <script src="{% static 'vendor/js/switch_images.js' %}"></script>
+    <script src="{% static 'vendor/js/glide_customization.js' %}"></script>
+{% endblock %}

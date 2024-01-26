@@ -1,0 +1,523 @@
+{% extends 'products/base.html' %}
+{% load cache static %}
+
+{% block critical_css %}
+    {{ block.super }}
+    <!-- Критические стили для страницы Products -->
+    <link rel="stylesheet" href="{% static 'vendor/css/critical_products.css' %}">
+{% endblock %}
+
+{% block css %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'vendor/css/ionicons.min.css' %}" async>
+    <link rel="stylesheet" href="{% static 'vendor/css/linearicon.min.css' %}" async>
+    <link rel="stylesheet" href="{% static 'vendor/plugins/nouislider/nouislider.min.css' %}" async>
+
+    <!-- Main Style CSS -->
+    <link rel="stylesheet" href="{% static 'vendor/css/style.css' %}" async>
+    <link rel="stylesheet" href="{% static 'vendor/css/modals.css' %}" async>
+{% endblock %}
+
+
+{% block content %}
+<div class="home">
+    <div class="home_container">
+        <div class="home_background" style="background-image:url(/media/images/categories.jpg); height: 250px; width: 100%;"></div>
+        <div class="home_content_container">
+            <div class="container">
+                <div class="row">
+                    <div class="col">
+                        <div class="home_content">
+                            <div class="results">{% include 'products/_breadcrumbs.html' %}</div>
+                            <h1>{{ page_title }}</h1>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="shop-category-area mt-30px">
+    <div class="container">
+        <div class="row">
+            <!-- Sidebar Area Start -->
+            <div class="col-lg-3 order-lg-first col-md-12 order-md-first mb-md-60px mb-lm-60px">
+                <div class="shop-sidebar-wrap">
+                    <div class="sidebar-widget mb-30px">
+                        <div class="accordion" id="accordionExample">
+                            {% for category in categories %}
+                            <div class="card">
+                                <div class="card-header" id="heading{{ category.id }}">
+                                    <a href="#" data-bs-toggle="collapse" data-bs-target="#collapse{{ category.id }}" aria-expanded="false" aria-controls="collapse{{ category.id }}" class="collapsed">{{ category.name }}</a>
+                                </div>
+                                <div id="collapse{{ category.id }}" class="collapse" aria-labelledby="heading{{ category.id }}" data-bs-parent="#accordionExample">
+                                    <div class="card-body">
+                                        <ul class="category-list">
+                                            {% for subcategory in category.get_subcategories %}
+                                            <li><a href="{% url 'products:subcategory' category.slug subcategory.slug %}">•{{ subcategory.name }}</a></li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <!-- Sidebar single item -->
+                    <form method="GET" action="#">
+                        <div class="card" id="block-filtration">
+                            <div class="sidebar-title text-center">
+                                Фильтры
+                            </div>
+                            <div class="container">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div class="form-group">
+                                            <label for="min_price_value">От:</label>
+                                            <input type="number" name="min_price_value" id="min_price" class="form-control custom-input" value="0">
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="form-group">
+                                            <label for="max_price_value">До:</label>
+                                            <input type="number" name="max_price_value" id="max_price" class="form-control custom-input" value="1300000">
+                                        </div>
+                                    </div>
+                                    <div class="col-12 price-slider">
+                                        <div id="price-slider"></div>
+                                    </div>
+                                </div>
+
+
+                               <div class="row">
+                                   <div class="col-12">
+                                       <div class="form-group form-check availability">
+                                           <input type="checkbox" name="in_stock" id="in_stock" class="form-check-input" {% if in_stock %}checked{% endif %}>
+                                           <label class="form-check-label" for="in_stock">Только в наличии</label>
+                                       </div>
+                                   </div>
+                               </div>
+
+                               <div class="row">
+                                   <div class="col-12">
+                                       <p>Производители</p>
+                                       <ul class="list-group list-group-flush manufacturer-list" aria-labelledby="manufacturerDropdown">
+                                           {% for characteristic in manufacturers %}
+                                           <li class="list-group-item">
+                                               <input type="checkbox" name="manufacturer[]" id="manufacturer_{{ characteristic }}" class="form-check-input" value="{{ characteristic }}" {% if characteristic in selected_manufacturers %}checked{% endif %}>
+                                               <label class="form-check-label" for="manufacturer_{{ characteristic }}">{{ characteristic }}</label>
+                                           </li>
+                                           {% endfor %}
+                                       </ul>
+                                   </div>
+                               </div>
+                            </div>
+
+
+                            <div class="filter-btn text-center">
+                                <button type="button" id="apply-filter-button" class="btn btn-primary">Применить фильтр</button>
+                            </div>
+                        </div>
+                    </form>
+                    <!-- Sidebar single item -->
+                    <div class="sidebar-widget tag mt-30px" style="display: block;">
+                        <div class="main-heading">
+                            <p class="sidebar-title"><span>Теги</span></p>
+                        </div>
+                        <div class="sidebar-widget-tag">
+                            <ul>
+                                {% for tag in popular_tags %}
+                                <li><a href="{% url 'products:tag_products' tag.slug %}">{{ tag.name }}</a></li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                    <!-- Sidebar single item -->
+                    </div>
+                </div>
+            <div class="col-lg-9 order-lg-last col-md-12 order-md-last mb-md-60px mb-lm-60px">
+                <div class="shop-top-bar d-flex">
+                    <div class="main-heading">
+                        <p class="top-bar-title"><span>Теги</span></p>
+                    </div>
+                    <div class="sidebar-widget-tag">
+                        <ul>
+                            {% for tag in popular_tags %}
+                            <li><a href="{% url 'products:tag_products' tag.slug %}">{{ tag.name }}</a></li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+                <!-- Shop Top Area Start -->
+                <div class="shop-top-bar d-flex flex-wrap">
+                    <!-- Left Side start -->
+                    <div class="shop-tab nav d-flex" role="tablist">
+                        <a class="active" href="#shop-1" data-bs-toggle="tab" aria-selected="true" role="tab">
+                            <i class="fa"><svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 512 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><style>svg{fill:#2968d6}</style><path d="M149.333 56v80c0 13.255-10.745 24-24 24H24c-13.255 0-24-10.745-24-24V56c0-13.255 10.745-24 24-24h101.333c13.255 0 24 10.745 24 24zm181.334 240v-80c0-13.255-10.745-24-24-24H205.333c-13.255 0-24 10.745-24 24v80c0 13.255 10.745 24 24 24h101.333c13.256 0 24.001-10.745 24.001-24zm32-240v80c0 13.255 10.745 24 24 24H488c13.255 0 24-10.745 24-24V56c0-13.255-10.745-24-24-24H386.667c-13.255 0-24 10.745-24 24zm-32 80V56c0-13.255-10.745-24-24-24H205.333c-13.255 0-24 10.745-24 24v80c0 13.255 10.745 24 24 24h101.333c13.256 0 24.001-10.745 24.001-24zm-205.334 56H24c-13.255 0-24 10.745-24 24v80c0 13.255 10.745 24 24 24h101.333c13.255 0 24-10.745 24-24v-80c0-13.255-10.745-24-24-24zM0 376v80c0 13.255 10.745 24 24 24h101.333c13.255 0 24-10.745 24-24v-80c0-13.255-10.745-24-24-24H24c-13.255 0-24 10.745-24 24zm386.667-56H488c13.255 0 24-10.745 24-24v-80c0-13.255-10.745-24-24-24H386.667c-13.255 0-24 10.745-24 24v80c0 13.255 10.745 24 24 24zm0 160H488c13.255 0 24-10.745 24-24v-80c0-13.255-10.745-24-24-24H386.667c-13.255 0-24 10.745-24 24v80c0 13.255 10.745 24 24 24zM181.333 376v80c0 13.255 10.745 24 24 24h101.333c13.255 0 24-10.745 24-24v-80c0-13.255-10.745-24-24-24H205.333c-13.255 0-24 10.745-24 24z"/></svg></i>
+                        </a>
+                        <a href="#shop-2" data-bs-toggle="tab" aria-selected="false" tabindex="-1" role="tab">
+                            <i class="fa"><svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 512 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><style>svg{fill:#2968d6}</style><path d="M40 48C26.7 48 16 58.7 16 72v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V72c0-13.3-10.7-24-24-24H40zM192 64c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zm0 160c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zm0 160c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zM16 232v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V232c0-13.3-10.7-24-24-24H40c-13.3 0-24 10.7-24 24zM40 368c-13.3 0-24 10.7-24 24v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V392c0-13.3-10.7-24-24-24H40z"/></svg></i>
+                        </a>
+                        <p>Товаров в разделе: {{ products_count }}</p>
+                    </div>
+                    <!-- Left Side End -->
+                    <!-- Right Side Start -->
+                    <div class="select-shoing-wrap d-flex">
+                        <form id="products_sorting_form" action="" method="get">
+                            <div class="shop-select">
+                                <select id="sort-select" name="sort">
+                                    {% if "/products" in request.path %}
+                                        <option value="name">По названию (А-Я)</option>
+                                        <option value="-name">По названию (Я-А)</option>
+                                        <option value="by_price">Цена (нарастание)</option>
+                                        <option value="-by_price">Цена (убывание)</option>
+                                    {% endif %}
+                                </select>
+                                <button type="submit">Сортировать</button>
+                            </div>
+                        </form>
+                    </div>
+                    <!-- Right Side End -->
+                </div>
+                <!-- Shop Top Area End -->
+
+                <!-- Shop Bottom Area Start -->
+                <div class="shop-bottom-area mt-35">
+                    <!-- Shop Tab Content Start -->
+                    {% if products_count != 0 %}
+                    <div class="tab-content jump">
+                        <!-- Tab One Start -->
+                        <div id="shop-1" class="tab-pane active" role="tabpanel">
+                            <div class="row m-0">
+                                {% for product in object_list %}
+                                <div class="mb-30px col-md-4 col-sm-6  p-0">
+                                    <div class="slider-single-item">
+                                        <!-- Single Item -->
+                                        <article class="list-product p-0 text-center">
+                                            <div class="product-inner {% if product.price == 1000000 %}no_price{% endif %}">
+                                                <div class="img-block">
+                                                    <a href="{% url 'products:product_detail' product_slug=product.slug product_id=product.id %}" class="thumbnail">
+                                                        <img class="first-img" src="{{ product.image.url }}" alt="" style="min-width: 230px; max-width: 345px; min-height: 230px; max-height: 345px;">
+                                                    </a>
+                                                    <div class="add-to-link comparison-container">
+                                                        <ul>
+                                                            <li>
+                                                                <a class="quick_view quick-view-btn" href="#" data-link-action="quickview" title="Быстрый просмотр"
+                                                                   data-toggle="modal" data-target="#quickviewModal"
+                                                                   data-product-id="{{ product.id }}"
+                                                                   data-product-name="{{ product.name }}"
+                                                                   data-product-price="{{ product.price }}"
+                                                                   data-product-image="{{ product.image.url }}"
+                                                                   data-product-description="{{ product.description }}"
+                                                                   data-product-characteristics='[
+                                                                          {% for characteristic in product.characteristics.all %}
+                                                                              {
+                                                                                  "name": "{{ characteristic.name|escapejs }}",
+                                                                                  "value": "{{ characteristic.value|escapejs }}"
+                                                                              }
+                                                                              {% if not forloop.last %},{% endif %}
+                                                                          {% endfor %}
+                                                                      ]'>
+                                                                    <i class="lnr lnr-magnifier"></i>
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a href="#" title="Добавить к сравнению" class="add-to-comparison" data-product-id="{{ product.id }}" data-session-id="{{ request.session.session_key }}">
+                                                                    <i class="lnr lnr-sync"></i>
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a href="#" title="Купить в 1 клик" class="icon-buyinconeclick" data-toggle="modal" data-target="#buyInOneClickModal" data-product-id="{{ product.id }}" onclick="passProductId(this)">Купить</a>
+                                                            </li>
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                                <ul class="product-flag">
+                                                    {% if product.is_new %}
+                                                        <li class="new">Новинка</li>
+                                                    {% endif %}
+                                                </ul>
+                                                <div class="product-decs">
+                                                    <h2><a href="{% url 'products:product_detail' product_slug=product.slug product_id=product.id %}" class="product-link">{{ product.name }}</a></h2>
+                                                    <div class="pricing-meta">
+                                                        <ul>
+                                                            {% if product.price == 1000000 %}
+                                                                <p>ЦЕНА: ПО ЗАПРОСУ</p>
+                                                            {% else %}
+                                                                {% if product.discount_price %}
+                                                                    <p class="old-price">{{ product.price }}</p>
+                                                                    <p id="DiscountTotalPrice_{{ product.id }}" class="total-price" data-product-price="{{ product.discount_price }}">{{ product.discount_price }}</p>
+                                                                {% else %}
+                                                                    <p id="totalPrice_{{ product.id }}" class="total-price" data-product-price="{{ product.price }}">{{ product.price }}</p>
+                                                                {% endif %}
+                                                            {% endif %}
+                                                        </ul>
+                                                    </div>
+                                                    {% if product.price == 1000000 %}
+                                                        <div class="placeholder"></div>
+                                                    {% else %}
+                                                        <div class="quantity-section text-center">
+                                                            <div class="quantity-input-container">
+                                                                <button class="quantity-btn decrease">-</button>
+                                                                <input type="number" class="quantity-input grid-mode" id="quantity_{{ product.id }}" name="quantity" min="1" value="1" data-product-price="{{ product.price }}" data-product-id="{{ product.id }}" data-process="true" readonly>
+                                                                <button class="quantity-btn increase">+</button>
+                                                            </div>
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+                                                {% if product.price == 1000000 %}
+                                                    <div class="cart-btn">
+                                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#buyInOneClickModal" data-product-id="{{ product.id }}">Оставить заявку</button>
+                                                    </div>
+                                                {% else %}
+                                                    {% if user.is_authenticated %}
+                                                        <div class="cart-btn">
+                                                            <button type="submit" class="add-to-cart btn btn-primary" data-product-id="{{ product.id }}" data-authenticated="1">В корзину</button>
+                                                        </div>
+                                                    {% else %}
+                                                        <div class="cart-btn">
+                                                            <button type="submit" class="add-to-cart btn btn-primary" data-product-id="{{ product.id }}" data-product-name="{{ product.name }}" data-product-quantity="{{ product.quantity }}" data-authenticated="0">В корзину</button>
+                                                        </div>
+                                                    {% endif %}
+                                                {% endif %}
+                                            </div>
+                                        </article>
+                                        <!-- Single Item -->
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <!-- Tab One End -->
+                        <!-- Tab Two Start -->
+                        <div id="shop-2" class="tab-pane" role="tabpanel">
+                            {% for product in object_list %}
+                            <div class="shop-list-wrap mb-30px scroll-zoom">
+                                <div class="slider-single-item">
+                                    <div class="row list-product m-0px">
+                                        <div class="col-md-12 padding-0px product-inner {% if product.price == 1000000 %}no_price{% endif %}">
+                                            <div class="row">
+                                                <div class="col-xs-12 col-sm-12 col-md-4 col-lg-4 p-0">
+                                                    <div class="left-img">
+                                                        <div class="img-block">
+                                                            <a href="{% url 'products:product_detail' product_slug=product.slug product_id=product.id %}" class="thumbnail">
+                                                                <img class="first-img" src="{{ product.image.url }}" alt="{{ product.name }}" loading="lazy">
+                                                            </a>
+                                                            <ul class="product-flag">
+                                                                {% if product.is_new %}
+                                                                    <li class="new">Новинка</li>
+                                                                {% endif %}
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-xs-12 col-sm-12 col-md-8 col-lg-8 p-0">
+                                                    <div class="product-desc-wrap">
+                                                        <div class="product-decs">
+                                                            <h2><a href="{% url 'products:product_detail' product_slug=product.slug product_id=product.id %}" class="product-link text-center">{{ product.name }}</a></h2>
+                                                            <div class="product-intro-info">
+                                                                <table class="characteristics-table">
+                                                                    <tbody>
+                                                                        {% for characteristic in product.characteristics.all %}
+                                                                            <tr>
+                                                                                <td>{{ characteristic.name }}:</td>
+                                                                                <td>{{ characteristic.value }}</td>
+                                                                            </tr>
+                                                                        {% endfor %}
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+                                                        </div>
+                                                        <div class="box-inner d-flex">
+                                                            <div class="align-self-center">
+                                                                <div class="in-stock">Наличие: <span>{{ product.quantity }}</span></div>
+                                                                <div class="pricing-meta">
+                                                                    <ul>
+                                                                        {% if product.price == 1000000 %}
+                                                                           <p>ЦЕНА: ПО ЗАПРОСУ</p>
+                                                                        {% else %}
+                                                                            {% if product.discount_price %}
+                                                                                <p class="old-price">{{ product.price }}</p>
+                                                                                <p id="DiscountTotalPrice_{{ product.id }}-list" class="total-price" data-product-price="{{ product.discount_price }}">{{ product.discount_price }}</p>
+                                                                            {% else %}
+                                                                                <p id="totalPrice_{{ product.id }}-list" class="total-price" data-product-price="{{ product.price }}">{{ product.price }}</p>
+                                                                            {% endif %}
+                                                                        {% endif %}
+                                                                    </ul>
+                                                                </div>
+                                                                {% if product.price == 1000000 %}
+                                                                    <div class="placeholder"></div>
+                                                                {% else %}
+                                                                    <div class="quantity-section text-center">
+                                                                        <div class="quantity-input-container">
+                                                                            <button class="quantity-btn decrease">-</button>
+                                                                            <input type="number" class="quantity-input list-mode" id="quantity_{{ product.id }}-list" name="quantity" min="1" value="1" data-product-price="{{ product.price }}" data-product-id="{{ product.id }}" data-process="true" readonly>
+                                                                            <button class="quantity-btn increase">+</button>
+                                                                        </div>
+                                                                    </div>
+                                                                {% endif %}
+                                                                {% if product.price == 1000000 %}
+                                                                    <div class="cart-btn">
+                                                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#buyInOneClickModal" data-product-id="{{ product.id }}">Оставить заявку</button>
+                                                                    </div>
+                                                                {% else %}
+                                                                    {% if user.is_authenticated %}
+                                                                        <div class="cart-btn">
+                                                                            <button type="submit" class="add-to-cart btn btn-primary" data-product-id="{{ product.id }}" data-authenticated="1">В корзину</button>
+                                                                        </div>
+                                                                    {% else %}
+                                                                        <div class="cart-btn">
+                                                                            <button type="submit" class="add-to-cart btn btn-primary" data-product-id="{{ product.id }}" data-product-name="{{ product.name }}" data-product-quantity="{{ product.quantity }}" data-authenticated="0">В корзину</button>
+                                                                        </div>
+                                                                    {% endif %}
+                                                                {% endif %}
+                                                                <div class="add-to-link comparison-container">
+                                                                    <ul>
+                                                                        <li>
+                                                                            <a class="quick_view quick-view-btn" href="#" data-link-action="quickview" title="Быстрый просмотр"
+                                                                               data-bs-toggle="modal" data-bs-target="#quickviewModal"
+                                                                               data-product-id="{{ product.id }}"
+                                                                               data-product-name="{{ product.name }}"
+                                                                               data-product-price="{{ product.price }}"
+                                                                               data-product-image="{{ product.image.url }}"
+                                                                               data-product-description="{{ product.description }}">
+                                                                                <i class="lnr lnr-magnifier"></i>
+                                                                            </a>
+                                                                        </li>
+                                                                        <li>
+                                                                            <a href="#" title="Добавить к сравнению" class="add-to-comparison" data-product-id="{{ product.id }}" data-session-id="{{ request.session.session_key }}">
+                                                                                <i class="lnr lnr-sync"></i>
+                                                                            </a>
+                                                                        </li>
+                                                                        {% if product.price != 1000000 %}
+                                                                        <li>
+                                                                            <a href="#" title="Купить в 1 клик" class="icon-buyinconeclick" data-toggle="modal" data-target="#buyInOneClickModal" data-product-id="{{ product.id }}" onclick="passProductId(this)">Купить</a>
+                                                                        </li>
+                                                                        {% endif %}
+                                                                    </ul>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <!-- Tab Two End -->
+                    </div>
+                    {% else %}
+                        <div>Подходящих товаров не найдено. Рекомендуем расширить условия фильтрации, или воспользоваться поиском по каталогу!</div>
+                        {% if featured_subcategories %}
+                            <div class="featured-subcategories">
+                                <h4>Возможно Вас заинтересует:</h4>
+                                <div class="featured-subcategory-grid">
+                                    {% for subcategory in featured_subcategories %}
+                                        <div class="featured-subcategory-item">
+                                            <img src="{{ subcategory.image.url }}" alt="{{ subcategory.name }}">
+                                            <p>{{ subcategory.name }}</p>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endif %}
+                    <!-- Shop Tab Content End -->
+                    <!-- Pagination Area Start -->
+                    {% if '/products/search/' in request.path %}
+                        <div class="pro-pagination-style text-center mtb-50px">
+                            <ul class="pagination justify-content-center">
+                                <li class="page-item {% if not page_obj.has_previous %} disabled {% endif %}">
+                                    <a class="page-link"
+                                       href="{% if page_obj.has_previous %}?keyword={{ keyword }}&page={{ page_obj.previous_page_number }}{% else %}#{% endif %}"
+                                       tabindex="-1" aria-disabled="true">
+                                        <i class="fa-arrow-left"><svg xmlns="http://www.w3.org/2000/svg" height="0.625em" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path d="M9.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.2 288 416 288c17.7 0 32-14.3 32-32s-14.3-32-32-32l-306.7 0L214.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></i>
+                                    </a>
+                                </li>
+                                {% if page_obj.paginator.num_pages > 1 %}
+                                    {% for page in page_obj.paginator.page_range %}
+                                        {% if page == page_obj.number %}
+                                            <li class="page-item active"><span class="page-link">{{ page }}</span></li>
+                                        {% elif page_obj.number > page|add:"-3" and page_obj.number < page|add:"3" %}
+                                            <li class="page-item"><a class="page-link" href="?keyword={{ keyword }}&page={{ page }}">{{ page }}</a></li>
+                                        {% elif page == page_obj.paginator.num_pages or page == 1 %}
+                                            <li class="page-item"><a class="page-link" href="?keyword={{ keyword }}&page={{ page }}">{{ page }}</a></li>
+                                        {% else %}
+                                            {% if forloop.counter|add:"-1" == page_obj.number or forloop.counter|add:"1" == page_obj.number %}
+                                                <li class="page-item disabled"><span class="page-link">...</span></li>
+                                            {% endif %}
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endif %}
+                                <li class="page-item {% if not page_obj.has_next %} disabled {% endif %}">
+                                    <a class="page-link"
+                                    href="{% if page_obj.has_next %}?keyword={{ keyword }}&page={{ page_obj.next_page_number }}{% else %}#{% endif %}"
+                                    tabindex="-1" aria-disabled="true">
+                                     <i class="fa-arrow-right"><svg xmlns="http://www.w3.org/2000/svg" height="0.625em" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path d="M438.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-160-160c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L338.8 224 32 224c-17.7 0-32 14.3-32 32s-14.3 32-32 32l306.7 0L233.4 393.4c-12.5 12.5-12.5 32.8 0 45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></i></a>
+                                </li>
+                            </ul>
+                        </div>
+                    {% else %}
+                        <div class="pro-pagination-style text-center mtb-50px">
+                            <ul class="pagination justify-content-center">
+                                <li class="page-item {% if not page_obj.has_previous %} disabled {% endif %}">
+                                    <a class="page-link"
+                                       href="{% if page_obj.has_previous %}?{% if min_price %}min_price_value={{ min_price }}&{% endif %}{% if max_price %}max_price_value={{ max_price }}&{% endif %}{% if manufacturers_filter %}{% for manufacturer in manufacturers_filter %}manufacturer[]={{ manufacturer }}&{% endfor %}{% endif %}{% if in_stock %}in_stock={{ in_stock }}&{% endif %}page={{ page_obj.previous_page_number }}{% if sort %}&sort={{ sort }}{% endif %}{% else %}#{% endif %}"
+                                       tabindex="-1" aria-disabled="true">
+                                        <i class="fa-arrow-left"><svg xmlns="http://www.w3.org/2000/svg" height="0.625em" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path d="M9.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.2 288 416 288c17.7 0 32-14.3 32-32s-14.3-32-32-32l-306.7 0L214.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></i>
+                                    </a>
+                                </li>
+                                {% if page_obj.paginator.num_pages > 1 %}
+                                    {% for page in page_obj.paginator.page_range %}
+                                        {% if page == page_obj.number %}
+                                            <li class="page-item active"><span class="page-link">{{ page }}</span></li>
+                                        {% elif page_obj.number > page|add:"-3" and page_obj.number < page|add:"3" %}
+                                            <li class="page-item"><a class="page-link" href="?{% if min_price %}min_price_value={{ min_price }}&{% endif %}{% if max_price %}max_price_value={{ max_price }}&{% endif %}{% if manufacturers_filter %}{% for manufacturer in manufacturers_filter %}manufacturer[]={{ manufacturer }}&{% endfor %}{% endif %}{% if in_stock %}in_stock={{ in_stock }}&{% endif %}page={{ page }}{% if sort %}&sort={{ sort }}{% endif %}">{{ page }}</a></li>
+                                        {% elif page == page_obj.paginator.num_pages or page == 1 %}
+                                            <li class="page-item"><a class="page-link" href="?{% if min_price %}min_price_value={{ min_price }}&{% endif %}{% if max_price %}max_price_value={{ max_price }}&{% endif %}{% if manufacturers_filter %}{% for manufacturer in manufacturers_filter %}manufacturer[]={{ manufacturer }}&{% endfor %}{% endif %}{% if in_stock %}in_stock={{ in_stock }}&{% endif %}page={{ page }}{% if sort %}&sort={{ sort }}{% endif %}">{{ page }}</a></li>
+                                        {% else %}
+                                            {% if forloop.counter|add:"-1" == page_obj.number or forloop.counter|add:"1" == page_obj.number %}
+                                                <li class="page-item disabled"><span class="page-link">...</span></li>
+                                            {% endif %}
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endif %}
+                                <li class="page-item {% if not page_obj.has_next %} disabled {% endif %}">
+                                    <a class="page-link"
+                                       href="{% if page_obj.has_next %}?{% if min_price %}min_price_value={{ min_price }}&{% endif %}{% if max_price %}max_price_value={{ max_price }}&{% endif %}{% if manufacturers_filter %}{% for manufacturer in manufacturers_filter %}manufacturer[]={{ manufacturer }}&{% endfor %}{% endif %}{% if in_stock %}in_stock={{ in_stock }}&{% endif %}page={{ page_obj.next_page_number }}{% if sort %}&sort={{ sort }}{% endif %}{% else %}#{% endif %}"
+                                       tabindex="-1" aria-disabled="true">
+                                        <i class="fa-arrow-right"><svg xmlns="http://www.w3.org/2000/svg" height="0.625em" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path d="M438.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-160-160c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L338.8 224 32 224c-17.7 0-32 14.3-32 32s-14.3 32-32 32l306.7 0L233.4 393.4c-12.5 12.5-12.5 32.8 0 45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></i></a>
+                                </li>
+                            </ul>
+                        </div>
+                    {% endif %}
+                    <!-- Pagination Area End -->
+                </div>
+                <!-- Shop Bottom Area End -->
+            </div>
+        </div>
+    </div>
+
+    <input type="hidden" id="comparison-product-ids" value="{{ comparison_product_ids|safe }}">
+
+    {% include 'products/modal_quickview.html' with product=product %}
+    {% include 'products/modal_buyinoneclick.html' with product=product %}
+
+    <script src="{% static 'vendor/plugins/nouislider/nouislider.min.js' %}"></script>
+    <script src="{% static 'vendor/plugins/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'vendor/plugins/modernizr-3.11.2.min.js' %}"></script>
+    <script src="{% static 'vendor/js/products_filtration.js' %}"></script>
+    <script src="{% static 'vendor/js/products_sorting.js' %}"></script>
+    <script src="{% static 'vendor/js/add_product_to_cart.js' %}"></script>
+    <script src="{% static 'vendor/js/add_product_to_cart_list.js' %}"></script>
+    <script src="{% static 'vendor/js/update_totalprice.js' %}"></script>
+    <script src="{% static 'vendor/js/quickview_modal.js' %}"></script>
+    <script src="{% static 'vendor/js/buyinoneclick_catalog.js' %}"></script>
+    <script src="{% static 'vendor/js/comparison_products.js' %}"></script>
+    <script src="{% static 'vendor/js/comparison_restoration.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,177 @@
+{% extends 'products/base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block css %}
+    {{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static 'vendor/css/checkout.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'vendor/css/checkout_responsive.css' %}">
+    <style>
+        input.button.order_button:hover {}
+        input.button.order_button:active {
+            background: black;
+            color: white;
+        }
+        input.button.order_button:hover {
+            background: black;
+            color: white;
+        }
+        input[value] {
+            font-size: 1.5em;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="home">
+    <div class="home_container">
+        <div class="home_background" style="background-image:url('/media/images/cart.jpg')"></div>
+        <div class="home_content_container">
+            <div class="container">
+                <div class="row">
+                    <div class="col">
+                        <div class="home_content">
+                            <div class="results">{% include 'products/_breadcrumbs.html' %}</div>
+                            <h1>Оформление заказа</h1>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="checkout">
+    <div class="container">
+        <form action="{% url 'orders:checkout' %}" id="checkout_form" class="checkout_form" method="POST" name="checkform">
+            {% csrf_token %}
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="billing checkout_section">
+                        <div class="section_title">Данные получателя</div>
+                        <div class="section_subtitle">Куда и кому доставить заказ?</div>
+                        <div class="checkout_form_container">
+                            <div class="row">
+                                <div class="col-xl-6">
+                                    <label for="{{ form.first_name.id_for_label }}">Имя</label>
+                                    {{ form.first_name }}
+                                </div>
+                                <div class="col-xl-6 last_name_col">
+                                    <label for="{{ form.last_name.id_for_label }}">Фамилия</label>
+                                    {{ form.last_name }}
+                                </div>
+                            </div>
+                            <div>
+                                <label for="checkout_company">Компания</label>
+                                {{ form.company }}
+                            </div>
+                            <div>
+                                <label for="checkout_address">Улица, дом</label>
+                                {{ form.address }}
+                            </div>
+                            <div>
+                                <label for="checkout_zipcode">Индекс</label>
+                                {{ form.zipcode }}
+                            </div>
+                            <div>
+                                <label for="checkout_city">Город</label>
+                                {{ form.city }}
+                            </div>
+                            <div>
+                                <label for="checkout_province">Область</label>
+                                <select name="{{ form.province.name }}" id="{{ form.province.id_for_label }}" class="dropdown_item_select checkout_input select-dropdown" required="required">
+                                    <option></option>
+                                    {% for province_code, province_name in PROVINCE_CHOICES %}
+                                        <option value="{{ province_code }}">{{ province_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div>
+                                <label for="checkout_phone">Телефон</label>
+                                {{ form.phone }}
+                            </div>
+                            <div>
+                                <label for="checkout_aux_phone">Телефон, если не дозвонимся</label>
+                                {{ form.aux_phone }}
+                            </div>
+                            <div>
+                                <label for="checkout_email">Email</label>
+                                {{ form.email }}
+                            </div>
+                            <input type="hidden" name="delivery_method" value="{{ selected_delivery_method_id }}">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="order checkout_section">
+                        <div class="section_title">Заказ</div>
+                        <div class="section_subtitle">Детали</div>
+                        <div class="order_list_container">
+                            <div class="order_list_bar d-flex flex-row align-items-center justify-content-start">
+                                <div class="order_list_title">Товар</div>
+                                <div class="order_list_value ml-auto">Сумма</div>
+                            </div>
+                            <ul class="order_list">
+                                {% if user.is_authenticated %}
+                                    {% for basket in baskets %}
+                                        <li class="d-flex flex-row align-items-center justify-content-start">
+                                            <div class="order_list_title">{{ basket.product.name }}</div>
+                                            <div class="order_list_value ml-auto">{{ basket.sum|floatformat:2|comma_to_dot }}</div>
+                                        </li>
+                                    {% endfor %}
+                                    <li class="d-flex flex-row align-items-center justify-content-start">
+                                        <div class="order_list_title">Доставка</div>
+                                        <div class="order_list_value ml-auto">{{ selected_delivery_price|floatformat:2|comma_to_dot }}</div>
+                                    </li>
+                                    {% if user.promo_code %}
+                                    <li class="d-flex flex-row align-items-center justify-content-start">
+                                        <div class="order_list_title">Промо-код</div>
+                                        <div class="order_list_value ml-auto">-{{ user.promo_code.discount|floatformat:2|comma_to_dot }}</div>
+                                    </li>
+                                    {% endif %}
+                                   <li class="d-flex flex-row align-items-center justify-content-start">
+                                       <div class="order_list_title">Итог</div>
+                                       <div class="order_list_value ml-auto">
+                                           {% calculate_total baskets.total_sum selected_delivery_price user.promo_code.discount|floatformat:2|comma_to_dot %}
+                                       </div>
+                                   </li>
+                                {% else %}
+                                    {% for basket in baskets %}
+                                        <li class="d-flex flex-row align-items-center justify-content-start">
+                                            <div class="order_list_title">{{ basket.product_name }}</div>
+                                            <div class="order_list_value ml-auto">{{ basket.sum|floatformat:2|comma_to_dot }}</div>
+                                        </li>
+                                    {% endfor %}
+                                    <li class="d-flex flex-row align-items-center justify-content-start">
+                                        <div class="order_list_title">Доставка</div>
+                                        <div class="order_list_value ml-auto">{{ selected_delivery_price }}</div>
+                                    </li>
+                                    <li class="d-flex flex-row align-items-center justify-content-start">
+                                        <div class="order_list_title">Итог</div>
+                                        <div class="order_list_value ml-auto">{{ total_sum|add_values:selected_delivery_price|floatformat:2|comma_to_dot }}</div>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </div>
+
+                        <div class="payment">
+                            <div class="section_title">Как платим</div>
+                            <div class="payment_options">
+                                <label for="{{ form.payment_method.id_for_label }}" class="form-label">Способ облаты</label>
+                                {{ form.payment_method }}
+                            </div>
+                        </div>
+
+                        <div class="order_text">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin pharetra temp or so dales. Phasellus sagittis auctor gravida. Integ er bibendum sodales arcu id te mpus. Ut consectetur lacus.</div>
+                        <input class="button order_button" type="submit" form="checkout_form" value="Оформить" data-original-title="" title="">
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<script src="https://code.jquery.com/jquery-3.7.0.js" integrity="sha256-JlqSTELeR4TLqP0OG9dxM7yDPqX1ox/HfgiSLBj8+kM=" crossorigin="anonymous"></script>
+<script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"></script>
+<script src="{% static 'vendor/js/createorder_validation.js' %}"></script>
+{% endblock %}

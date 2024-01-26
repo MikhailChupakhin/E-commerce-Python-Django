@@ -1,0 +1,24 @@
+@charset "UTF-8";/*!
+  Ionicons, v2.0.0
+  Created by Ben Sperry for the Ionic Framework, http://ionicons.com/
+  https://twitter.com/benjsperry  https://twitter.com/ionicframework
+  MIT License: https://github.com/driftyco/ionicons
+
+  Android-style icons originally built by Google’s
+  Material Design Icons: https://github.com/google/material-design-icons
+  used under CC BY http://creativecommons.org/licenses/by/4.0/
+  Modified icons to fit ionicon’s grid from original.
+*/
+@font-face {
+font-family: Ionicons;
+src: url(http://z/static/vendor/fontawesome/webfonts/ionicons.eot);
+src: url(/static/vendor/fontawesome/webfonts/ionicons.eot) format("embedded-opentype"),
+     url(http://127.0.0.1:8000//static/vendor/fontawesome/webfonts/ionicons.ttf) format("truetype"),
+     url(http://127.0.0.1:8000//vendor/fontawesome/webfonts/ionicons.woff) format("woff"),
+     url(http://127.0.0.1:8000//static/vendor/fontawesome/webfonts/ionicons.svg#Ionicons) format("svg");
+font-weight: 400;
+font-style: normal;
+.ion,.ion-arrow-down-a:before,.ion-arrow-down-c:before,.ion-arrow-left-a:before,.ion-arrow-left-c:before,.ion-arrow-right-a:before,.ion-arrow-right-c:before,.ion-card:before,.ion-close:before,.ion-code:before,.ion-document-text:before,.ion-document:before,.ion-email:before,.ion-flag:before,.ion-grid:before,.ion-home:before,.ion-image:before,.ion-images:before,.ion-ios-arrow-back:before,.ion-ios-arrow-down:before,.ion-ios-arrow-left:before,.ion-ios-arrow-right:before,.ion-ios-body:before,.ion-ios-box:before,.ion-ios-cart:before,.ion-ios-close:before,.ion-ios-contact:before,.ion-ios-copy:before,.ion-ios-email:before,.ion-ios-flag:before,.ion-ios-grid-view:before,.ion-ios-home:before,.ion-ios-list:before,.ion-ios-search-strong:before,.ion-ios-search:before,.ion-ios-toggle:before,.ion-link:before,.ion-search:before,.ion-social-css3:before,.ion-social-html5:before,.ion-toggle:before,.ionicons{display:inline-block;font-family:Ionicons;speak:none;font-style:normal;font-weight:400;font-variant:normal;text-transform:none;text-rendering:auto;line-height:1;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}.ion-arrow-down-a:before{content:"\f103"}.ion-arrow-down-c:before{content:"\f105"}.ion-arrow-left-a:before{content:"\f106"}.ion-arrow-left-c:before{content:"\f108"}.ion-arrow-right-a:before{content:"\f109"}.ion-arrow-right-c:before{content:"\f10b"}.ion-card:before{content:"\f119"}.ion-close:before{content:"\f12a"}.ion-code:before{content:"\f271"}.ion-document:before{content:"\f12f"}.ion-document-text:before{content:"\f12e"}.ion-email:before{content:"\f132"}.ion-flag:before{content:"\f279"}.ion-grid:before{content:"\f13f"}.ion-home:before{content:"\f144"}.ion-image:before{content:"\f147"}.ion-images:before{content:"\f148"}.ion-ios-arrow-back:before{content:"\f3cf"}.ion-ios-arrow-down:before{content:"\f3d0"}.ion-ios-arrow-left:before{content:"\f3d2"}.ion-ios-arrow-right:before{content:"\f3d3"}.ion-ios-body:before{content:"\f3e4"}.ion-ios-box:before{content:"\f3ec"}.ion-ios-cart:before{content:"\f3f8"}.ion-ios-close:before{content:"\f406"}.ion-ios-contact:before{content:"\f41a"}.ion-ios-copy:before{content:"\f41c"}.ion-ios-email:before{content:"\f423"}.ion-ios-flag:before{content:"\f42d"}.ion-ios-grid-view:before{content:"\f441"}.ion-ios-home:before{content:"\f448"}.ion-ios-list:before{content:"\f454"}.ion-ios-search:before{content:"\f4a5"}.ion-ios-search-strong:before{content:"\f4a4"}.ion-ios-toggle:before{content:"\f4c3"}.ion-link:before{content:"\f1fe"}.ion-search:before{content:"\f21f"}.ion-social-css3:before{content:"\f4df"}.ion-social-html5:before{content:"\f4e3"}.ion-toggle:before{content:"\f355"}
+.ion-ios-search:before {
+    content: "\f4a5";
+}

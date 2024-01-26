@@ -1,0 +1,128 @@
+body {
+    padding-top: 56px;
+}
+
+.btn-outline-success {
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
+@media (max-width: 767px) {
+  #carouselExampleIndicators {
+    display: none;
+  }
+}
+
+/* Стили для кнопки */
+.dropdown-toggle {
+    color: black;
+    font-size: 22px;
+    background-color: #E6E6FA;
+    border-radius: 5px;
+    border: 2px #C0C0C0	;
+    text-decoration: none;
+}
+.dropdown-toggle-cat {
+    color: black;
+    background-color: #E6E6FA;
+    text-decoration: none;
+}
+.dropdown-toggle:hover {
+    color: #DAA520;
+    /* Другие стили при наведении */
+}
+
+
+/* Стили для выпадающего меню */
+.dropdown-menu {
+    background-color: #E6E6FA;
+    /* Другие стили выпадающего меню */
+}
+
+/* Стилизация выпадающего подменю категории */
+.dropdown-item.dropdown .dropdown-menu {
+    position: absolute;
+    top: 0;
+    left: 100%; /* Подменю категории будет отображаться справа от родительского меню */
+    min-width: 200px; /* Измените ширину при необходимости */
+    display: none; /* По умолчанию скрываем подменю */
+}
+
+/* Показываем подменю категории при наведении на нее */
+.dropdown-item.dropdown:hover .dropdown-menu {
+    display: block;
+}
+
+/* Стили для элементов в выпадающем меню */
+.dropdown-item {
+    color: black;
+    font-size: 20px;
+    /* Другие стили элементов выпадающего меню */
+}
+
+/* Применяем отступ слева для элементов с классом subcategory-indent */
+.subcategory-indent {
+    padding-left: 20px; /* Задайте нужное значение отступа в пикселях или других единицах измерения */
+}
+
+/* Стили для сеточного вида товарных карточек */
+#productsContainer.grid-view .row {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+/* Установим 33.33% ширины для колонок в режиме сетки на широком экране */
+#productsContainer.grid-view .col-lg-4 {
+    flex-basis: 33.33% !important;
+}
+
+/* Установим 50% ширины для колонок в режиме сетки на узком экране */
+@media (max-width: 991.98px) {
+    #productsContainer.grid-view .col-lg-4 {
+        flex-basis: 50% !important;
+    }
+}
+
+/* Стили для списка товарных карточек */
+#productsContainer.list-view .col-lg-12 {
+    flex-basis: 100% !important;
+}
+
+/* Стили для обертки изображения */
+.image-wrapper {
+    border: 1px solid #ccc; /* Толщина и цвет рамки */
+    border-radius: 5px; /* Закругление краев (вы можете настроить значение, чтобы изменить степень закругления) */
+    padding: 5px; /* Внутренний отступ, чтобы создать пространство между рамкой и изображением (необязательно) */
+}
+
+/* Кнопка выбрать производителя в блоке фильтрации */
+#manufacturerDropdown {
+    color: black;
+    text-decoration: none;
+    background-color: #C0C0C0;
+    width: 100%;
+    padding-left: 15px;
+    padding-right: 15px;
+    font-size: 1.0rem;
+    border: 3px;
+    border-radius: 10px;
+    border-color: #E6E6FA;
+}
+
+.dropdown-menu-right {
+  right: 0;
+  left: auto;
+  position: absolute;
+  top: 0;
+  transform: translateX(100%);
+}
+
+/* Скрываем внутренние элементы управления кол-вом */
+.quantity-input::-webkit-inner-spin-button,
+.quantity-input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+.quantity-input {
+    -moz-appearance: textfield; /* Для Firefox */
+}

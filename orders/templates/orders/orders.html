@@ -1,0 +1,38 @@
+{% extends 'products/base.html' %}
+
+
+{% block content %}
+    <!-- Вывод хлебных крошек -->
+    {% include 'products/_breadcrumbs.html' %}
+    <div class="container-fluid pt-5 vh-100">
+        <div class="text-center mt-5">
+            <h1>Заказы</h1>
+            <div class="orders mt-5">
+                <table class="table">
+                    <thead>
+                    <tr class="table-light">
+                        <th scope="col">#</th>
+                        <th scope="col">Статус</th>
+                        <th scope="col">Создан</th>
+                        <th scope="col">Итого</th>
+                        <th scope="col">Действие</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for order in object_list %}
+                        <tr>
+                            <th scope="row">1</th>
+                            <td>{{ order.get_status_display }}</td>
+                            <td>{{ order.created }}</td>
+                            <td>{{ order.total_sum }} руб.</td>
+                            <td>
+                                <a href="{% url 'orders:order' order.id %}">просмотреть</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% if breadcrumbs %}
+    <nav id="breadcrumbs">
+        <ul>
+            {% for url, name in breadcrumbs %}
+                <a href="{{ url }}">{{ name }}</a>
+                {% if not forloop.last %}
+                    <span class="crumbs-separator">&gt;</span>
+                {% endif %}
+            {% endfor %}
+            {% if product.name %}
+                <span class="crumbs-separator">&gt;</span>
+                <span class="crumbs-name">{{ product.name }}</span>
+            {% endif %}
+        </ul>
+    </nav>
+{% endif %}

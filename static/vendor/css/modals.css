@@ -1,0 +1,27 @@
+.modal_description {
+  max-height: 400px;
+  overflow-y: auto;
+}
+#modalDescription {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+@media (max-width: 992px) {
+  .modal_image {
+    width: 200px;
+    height: 200px;
+  }
+
+@media (max-width: 767px) {
+  .modal_image {
+    display: none;
+  }
+  .modal_body {
+    flex-direction: column;
+  }
+  .modal_description,
+  .modal_characterstics {
+    margin-left: 5px;
+    margin-right: 5px;
+  }

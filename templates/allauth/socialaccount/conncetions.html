@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h2>Connections</h2>
+    {% for account in accounts %}
+        {{ account.get_provider_display }}: {{ account.get_display_name }}
+        <a href="{% url 'socialaccount_disconnect' account.id %}">Disconnect</a><br>
+    {% endfor %}
+    <a href="{% url 'profile' %}">Go to profile page</a>
+{% endblock %}

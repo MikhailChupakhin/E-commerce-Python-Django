@@ -1,0 +1,27 @@
+{% extends 'products/base.html' %}
+
+{% block content %}
+<head>
+    <title>Обратная связь!</title>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-9">
+                <div class="card my-5">
+                    <div class="card-header">
+                        <h1 class="text-center">Задайте нам Ваш вопрос, или оставьте своё пожелание!</h1>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" action="{% url 'users:feedback_view' %}">
+                            {% csrf_token %}
+                            {{ form.as_p }}
+                            <button type="submit" class="btn btn-primary">Отправить</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+{% endblock %}

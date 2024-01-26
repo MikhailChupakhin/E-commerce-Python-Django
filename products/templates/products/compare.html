@@ -1,0 +1,85 @@
+{% extends 'products/base.html' %}
+{% load cache static %}
+{% load custom_filters %}
+
+{% block css %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'vendor/css/compare.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="home">
+        <div class="home_container">
+            <div class="home_background" style="background-image:url(/media/images/categories.jpg); height: 100px; width: 100%;""></div>
+            <div class="home_content_container">
+                <div class="container">
+                    <div class="row">
+                        <div class="col">
+                            <div class="home_content">
+                                <div class="results breadcrumbs-product-details">{% include 'products/_breadcrumbs.html' %}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="comparison-table">
+        {% if products %}
+            <div class="row comparing-products">
+                {% for product in products %}
+                    {% if products|length == 2 %}
+                        <div class="col-6">
+                    {% elif products|length == 3 %}
+                         <div class="col-4">
+                    {% endif %}
+                        <div class="comparing-product{% if forloop.last %} last{% endif %}">
+                            <div class="product-image">
+                                <img src="{{ product.image.url }}" alt="{{ product.name }}" width="100" height="100">
+                            </div>
+                            <div class="product-details">
+                                <div class="comparing-product-title">
+                                    <h2 class="detail-content">
+                                        <a href="{% url 'products:product_detail' product_slug=product.slug product_id=product.id %}">{{ product.name }}</a>
+                                    </h2>
+                                </div>
+                                <div class="product-detail">
+                                    <h3 class="detail-content product-price">Цена: {{ product.price|floatformat:2|comma_to_dot }} ₽</h3>
+                                </div>
+                            </div>
+                            <div class="product-characteristics">
+                                <ul>
+                                    {% for characteristic in total_characteristics %}
+                                        <li>
+                                            <div class="characteristic_name">{{ characteristic }}:</div>
+                                            {% with product_characteristics=product.characteristics.all %}
+                                                <div class="characteristic_value">
+                                                    {% with matching_characteristic=product_characteristics|filter_by_name:characteristic|first %}
+                                                        {% if matching_characteristic %}
+                                                            {{ matching_characteristic.value }}
+                                                        {% else %}
+                                                            Нет данных
+                                                        {% endif %}
+                                                    {% endwith %}
+                                                </div>
+                                            {% endwith %}
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p>Список для сравнения пуст.</p>
+        {% endif %}
+    </div>
+
+    <div class="clear-button">
+        <button id="clearComparison" class="btn btn-primary">Очистить список и перейти в каталог</button>
+    </div>
+
+    <script src="{% static 'vendor/js/comparison_clear.js' %}"></script>
+{% endblock %}

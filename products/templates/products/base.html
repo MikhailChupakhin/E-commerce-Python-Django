@@ -1,0 +1,265 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>
+    {% if '/catalog/' in request.path or request.path == '/' %}
+        {% if seo_title is None %}
+            {{ product.sub_category }} {{ product.name }} купить c доставкой на дом | IMSOUND.ru
+        {% else %}
+            {{ seo_title }}
+        {% endif %}
+    {% else %}
+        {{ title }}
+    {% endif %}
+</title>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="robots" content="noindex">
+<meta name="description" content="Sublime project">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script async src="https://code.jquery.com/jquery-3.6.0.slim.min.js"></script>
+<link rel="stylesheet" type="text/css" href="{% static 'vendor/css/bootstrap4/bootstrap.min.css' %}">
+<link rel="preload" type="text/css" href="{% static 'vendor/css/main_styles.css' %}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<link rel="preload" type="text/css" href="{% static 'vendor/css/responsive.css' %}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+
+<!--&lt;!&ndash; Google Tag Manager &ndash;&gt;-->
+<!--<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':-->
+<!--new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],-->
+<!--j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=-->
+<!--'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);-->
+<!--})(window,document,'script','dataLayer','GTM-T9C4BJ7X');</script>-->
+<!--&lt;!&ndash; End Google Tag Manager &ndash;&gt;-->
+
+{% block critical_css %}{% endblock %}
+{% block css%}{% endblock%}
+</head>
+<body>
+
+    <div class="super_container">
+
+        <!-- Header -->
+    
+        <header class="header">
+            <div class="header_container">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="header-contact">
+                                <p><a href="tel:+71234567890"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 1408 1408"><path fill="darkred" d="M1408 1112q0 27-10 70.5t-21 68.5q-21 50-122 106q-94 51-186 51q-27 0-53-3.5t-57.5-12.5t-47-14.5T856 1357t-49-18q-98-35-175-83q-127-79-264-216T152 776q-48-77-83-175q-3-9-18-49t-20.5-55.5t-14.5-47T3.5 392T0 339q0-92 51-186Q107 52 157 31q25-11 68.5-21T296 0q14 0 21 3q18 6 53 76q11 19 30 54t35 63.5t31 53.5q3 4 17.5 25t21.5 35.5t7 28.5q0 20-28.5 50t-62 55t-62 53t-28.5 46q0 9 5 22.5t8.5 20.5t14 24t11.5 19q76 137 174 235t235 174q2 1 19 11.5t24 14t20.5 8.5t22.5 5q18 0 46-28.5t53-62t55-62t50-28.5q14 0 28.5 7t35.5 21.5t25 17.5q25 15 53.5 31t63.5 35t54 30q70 35 76 53q3 7 3 21z"/></svg> +7 (123) 456-7890</a></p>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="header-contact d-flex justify-content-end">
+                                <p><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 1536 1536"><path fill="darkred" d="M896 416v448q0 14-9 23t-23 9H544q-14 0-23-9t-9-23v-64q0-14 9-23t23-9h224V416q0-14 9-23t23-9h64q14 0 23 9t9 23zm416 352q0-148-73-273t-198-198t-273-73t-273 73t-198 198t-73 273t73 273t198 198t273 73t273-73t198-198t73-273zm224 0q0 209-103 385.5T1153.5 1433T768 1536t-385.5-103T103 1153.5T0 768t103-385.5T382.5 103T768 0t385.5 103T1433 382.5T1536 768z"/></svg>&nbsp;Пн-Пт 9:00-18:00</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="container">
+                    <div class="row">
+                        <div class="col">
+                            <div class="header_content d-flex flex-row align-items-center justify-content-start">
+                                <div class="logo"><a href="{% url 'index' %}">IMSOUND</a></div>
+                                <nav class="main_nav">
+                                    <ul>
+                                        <li class="active">
+                                            <a href="{% url 'index' %}">Главная</a>
+                                        </li>
+                                        <li class="hassubs">
+                                            <a href="{% url 'products:index' %}">Каталог</a>
+                                            <ul class="dropdown-item dropdown">
+                                                {% for category in categories %}
+                                                <li class="hs-has-sub-menu nav-item">
+                                                    <div class="category-name">
+                                                        <a class="menu-item" href="{% url 'products:category' category.slug %}">{{ category.name }}</a>
+                                                    </div>
+                                                    <div class="dropdown-menu">
+                                                        {% for subcategory in category.get_subcategories %}
+                                                        <a class="dropdown-item" href="{% url 'products:subcategory' category.slug subcategory.slug %}">{{ subcategory.name }}</a>
+                                                        {% endfor %}
+                                                    </div>
+                                                </li>
+                                                {% endfor %}
+                                            </ul>
+                                        </li>
+                                        <li class="active">
+                                            <a href="{% url 'blog:blog_index' %}">Блог</a>
+                                        </li>
+                                    </ul>
+                                </nav>
+                                <div class="header_extra ml-auto">
+                                    <div class="hamburger-menu">
+                                        &#9776;
+                                        <div class="hamburger-dropdown dropdown-content">
+                                            <ul>
+                                                <a href="{% url 'products:index' %}">Каталог</a>
+                                                <a href="{% url 'blog:blog_index' %}">Блог</a>
+                                                <a href="{% url 'index' %}">Главная</a>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div class="search">
+                                        <div class="search_icon">
+                                            <svg version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 475.084 475.084" style="enable-background:new 0 0 475.084 475.084;" xml:space="preserve"><g>
+                                                <path d="M464.524,412.846l-97.929-97.925c23.6-34.068,35.406-72.047,35.406-113.917c0-27.218-5.284-53.249-15.852-78.087
+                                                       c-10.561-24.842-24.838-46.254-42.825-64.241c-17.987-17.987-39.396-32.264-64.233-42.826
+                                                       C254.246,5.285,228.217,0.003,200.999,0.003c-27.216,0-53.247,5.282-78.085,15.847C98.072,26.412,76.66,40.689,58.673,58.676
+                                                       c-17.989,17.987-32.264,39.403-42.827,64.241C5.282,147.758,0,173.786,0,201.004c0,27.216,5.282,53.238,15.846,78.083
+                                                       c10.562,24.838,24.838,46.247,42.827,64.234c17.987,17.993,39.403,32.264,64.241,42.832c24.841,10.563,50.869,15.844,78.085,15.844
+                                                       c41.879,0,79.852-11.807,113.922-35.405l97.929,97.641c6.852,7.231,15.406,10.849,25.693,10.849
+                                                       c9.897,0,18.467-3.617,25.694-10.849c7.23-7.23,10.848-15.796,10.848-25.693C475.088,428.458,471.567,419.889,464.524,412.846z
+                                                        M291.363,291.358c-25.029,25.033-55.148,37.549-90.364,37.549c-35.21,0-65.329-12.519-90.36-37.549
+                                                       c-25.031-25.029-37.546-55.144-37.546-90.36c0-35.21,12.518-65.334,37.546-90.36c25.026-25.032,55.15-37.546,90.36-37.546
+                                                       c35.212,0,65.331,12.519,90.364,37.546c25.033,25.026,37.548,55.15,37.548,90.36C328.911,236.214,316.392,266.329,291.363,291.358z
+                                                       "/>
+                                            </g>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    {% if user.is_authenticated %}
+                                        <div class="shopping_cart">
+                                            <a href="{% url 'users:cart' user.id %}">
+                                                <img src="{% static 'vendor/img/cart-trolley.svg' %}" alt="Иконка корзины" width="25" height="25">
+                                                <div class="cart_text">Корзина{% if products_in_cart %}<span>({{ products_in_cart }})</span>{% endif %}</div>
+                                            </a>
+                                        </div>
+
+                                        <div class="menu-dropdown">
+                                            <div class="dropdown">
+                                                <button class="dropbtn nav-bar-button" onclick="toggleDropdown()">Меню</button>
+                                                <div class="dropdown-content" id="menu-content">
+                                                    <a href="{% url 'users:profile' user.id %}">Профиль</a>
+                                                    <a href="{% url 'orders:orders_list' user.id %}">Заказы</a>
+                                                    {% if user.is_superuser or user.is_staff %}
+                                                         <a class="dropdown-item" href="{% url 'admin:index' %}">Админ-панель</a>
+                                                    {% endif %}
+                                                    <hr class="dropdown-divider">
+                                                    <a href="{% url 'api:logout' %}">Выйти</a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% else %}
+                                        <div class="shopping_cart">
+                                            <a href="{% url 'users:cart_guest' %}">
+                                                <img src="{% static 'vendor/img/cart-trolley.svg' %}" alt="Иконка корзины" width="25" height="25">
+                                                <div class="cart_text">Корзина{% if products_in_cart %}<span>({{ products_in_cart }})</span>{% endif %}</div>
+                                            </a>
+                                        </div>
+                                        <a href="{% url 'users:login' %}" class="nav-bar-button">Войти</a>
+                                    {% endif %}
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Search Panel -->
+            <div class="search_panel trans_300">
+                <div class="container">
+                    <div class="row">
+                        <div class="col">
+                            <div class="search_panel_content d-flex flex-row align-items-center justify-content-end">
+                                <form action="{% url 'products:product_search' %}" method="GET">
+                                    <input type="text" class="search_input" name="keyword" placeholder="Поиск товаров" required="required">
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+    
+        <!-- Menu -->
+    
+        <div class="menu menu_mm trans_300">
+            <div class="menu_social">
+                <ul class="navbar-nav">
+                    {% if user.is_authenticated %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-user-circle"></i> Меню
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'users:profile' user.id %}">Профиль</a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'users:cart' user.id %}">Корзина</a>
+                                </li>
+                                <li><a class="dropdown-item" href="{% url 'orders:orders_list' user.id %}">Заказы</a></li>
+                                {% if user.is_superuser or user.is_staff %}
+                                    <li><a class="dropdown-item" href="{% url 'admin:index' %}">Админ-панель</a></li>
+                                {% endif %}
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'api:logout' %}">
+                                        Выйти
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'users:login' %}">Войти <i class="fas fa-sign-in-alt"></i></a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+        <!-- Контент страницы -->
+        {% block content %}{% endblock %}
+        {% block footer %}
+        <footer class="footer">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-6 col-md-6 col-sm-12">
+                        <div class="footer_section d-flex flex-column align-items-start">
+                            <p>Компания</p>
+                            <ul class="footer_links_list">
+                                {% for info_page in company_info %}
+                                    <li><a href="{% url 'seo-manager:info_page' slug=info_page.slug %}">{{ info_page.title }}</a></li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 col-md-6 col-sm-12">
+                        <div class="footer_section d-flex flex-column align-items-start">
+                            <p>Клиентам</p>
+                            <ul class="footer_links_list">
+                                {% for info_page in clients_info %}
+                                    <li><a href="{% url 'seo-manager:info_page' slug=info_page.slug %}">{{ info_page.title }}</a></li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <div class="footer_content d-flex flex-lg-row flex-column align-items-center justify-content-lg-start justify-content-center">
+                            <div class="footer_logo"><a href="#">IMSOUND</a></div>
+                            <div class="copyright ml-auto mr-auto">
+    Copyright &copy;<script>document.write(new Date().getFullYear());</script> Developed by Mikhail Chupakhin, 2023</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </footer>
+        {% endblock %}
+    </div>
+<script src="{% static 'vendor/css/bootstrap4/popper.js' %}"></script>
+<script src="{% static 'vendor/css/bootstrap4/bootstrap.min.js' %}"></script>
+<script src="{% static 'vendor/js/sweetalert.js' %}"></script>
+<script src="{% static 'vendor/js/custom.js' %}"></script>
+<!--&lt;!&ndash; Google Tag Manager (noscript) &ndash;&gt;-->
+<!--<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-T9C4BJ7X"-->
+<!--    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>-->
+<!--&lt;!&ndash; End Google Tag Manager (noscript) &ndash;&gt;-->
+
+</body>
+</html>
