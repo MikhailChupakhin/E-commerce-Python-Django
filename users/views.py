@@ -198,7 +198,7 @@ class GuestCartUpdateView(View):
             if str(product_id) in baskets:
                 if quantity_change_type == 'increase':
                     new_quantity = baskets[str(product_id)]['quantity'] + 1
-                    if new_quantity <= product.quantity:  # Проверка на доступное количество
+                    if new_quantity <= product.quantity:
                         baskets[str(product_id)]['quantity'] = new_quantity
                     else:
                         return JsonResponse({'error': 'Exceeded available quantity for this product'}, status=200)

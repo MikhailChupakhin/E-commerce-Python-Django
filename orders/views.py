@@ -47,7 +47,6 @@ class OrderDetailView(LoginRequiredMixin, DetailView):
 
     def get_object(self, queryset=None):
         obj = super().get_object(queryset)
-        # Проверяем, что текущий пользователь является создателем заказа
         if obj.initiator != self.request.user:
             raise Http404("Вы не имеете доступа к данному заказу.")
         return obj
@@ -69,7 +68,6 @@ class CheckoutView(TitleMixin, CreateView):
         context = super().get_context_data(**kwargs)
         context['PROVINCE_CHOICES'] = PROVINCE_CHOICES
 
-        # Получаем значение selected_delivery_price из сессии
         selected_delivery_method_id = self.request.session.get('selected_delivery_method_id')
         context['selected_delivery_method_id'] = selected_delivery_method_id
         context['selected_delivery_price'] = DeliveryMethod.objects.get(id=selected_delivery_method_id).price
@@ -86,7 +84,6 @@ class CheckoutView(TitleMixin, CreateView):
                     if request.user.promo_code:
                         order.apply_promo_code(request.user.promo_code)
 
-                        # Устанавливаем promo_code пользователя на None
                         request.user.promo_code = None
                         request.user.save()
 
@@ -94,7 +91,7 @@ class CheckoutView(TitleMixin, CreateView):
 
                 payment_method = form.cleaned_data.get('payment_method')
 
-                if payment_method.id == 1: #Наличными при получении
+                if payment_method.id == 1:
                     if request.user.is_authenticated:
                         order.update_after_order()
                     else:
@@ -119,7 +116,6 @@ class CheckoutView(TitleMixin, CreateView):
         return baskets
 
     def form_valid(self, form):
-        # Установка инициатора заказа
         if self.request.user.is_authenticated:
             form.instance.initiator = self.request.user
         else:

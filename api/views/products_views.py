@@ -1,11 +1,14 @@
+import json
 from statistics import mean
 
 from django.db.models import Q
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django_redis import get_redis_connection
 from rest_framework.generics import ListAPIView
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -26,9 +29,13 @@ from seo_manager.models import InfoPage, SliderImage
 from api.utils.breadcrumbs import get_breadcrumbs
 from api.utils.seo_attributes import get_seo_attributes
 from products.views import apply_filters_and_sort
+from ..utils.misc import gt_check_get_cached_basket
 
 
 class BaseAPIView(APIView):
+    # authentication_classes = [JWTAuthentication]
+    # permission_classes = [IsAuthenticated]
+
     def get_context(self):
         breadcrumbs_data = get_breadcrumbs(self.request)
         seo_data = get_seo_attributes(self.request)
@@ -50,7 +57,7 @@ class BaseAPIView(APIView):
             subcategories_data.append(
                 {
                     'category_name': category.name,
-                    'subcategories': ProductSubCategorySerializer(subcategories, many=True).data
+                    'subcategories_pack': ProductSubCategorySerializer(subcategories, many=True).data
                 }
             )
 
@@ -101,6 +108,7 @@ class CustomPagination(PageNumberPagination):
 
 
 class BaseProductListView(ListAPIView):
+
     serializer_class = ProductSerializer
     pagination_class = CustomPagination
     model = Product
@@ -325,6 +333,7 @@ def send_buyinoneclick_notification(sender, instance, created, **kwargs):
 
 class BasketAddAPIView(APIView):
     # {"product_id": 1, "quantity": 2}
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
@@ -375,203 +384,216 @@ class BasketAddAnonymousAPIView(APIView):
         serializer = BasketAddSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
+        guest_token, redis_connection, basket_data = gt_check_get_cached_basket(request)
+
         product_id = serializer.validated_data['product_id']
-        quantity = serializer.validated_data.get('quantity', 1)
+        incoming_quantity = serializer.validated_data.get('quantity', 1)
+
         try:
             product = Product.objects.get(id=product_id)
         except Product.DoesNotExist:
             return Response({'message': 'Продукт не найден.'}, status=status.HTTP_404_NOT_FOUND)
 
-        basket = request.session.get('basket', {})
-
-        if product.quantity == 0:
-            return Response({'message': 'Недопустимое количество (товар закончился).'}, status=status.HTTP_200_OK)
-
-        basket_item = basket.get(str(product_id))
+        if str(product_id) in basket_data.keys():
+            basket_item = product_id
+            basket_item_quantity = basket_data.get(str(product_id))
+        else:
+            basket_item = None
+            basket_item_quantity = 0
 
         if basket_item:
-            total_quantity_in_basket = basket_item['quantity'] + quantity
+            total_quantity_in_basket = basket_item_quantity + incoming_quantity
             if total_quantity_in_basket > product.quantity:
-                basket_item['quantity'] = product.quantity
+                outgoing_quantity = product.quantity
                 message = f'Максимальное доступное количество товара ({product.quantity}) добавлено в корзину.'
             else:
-                basket_item['quantity'] = total_quantity_in_basket
+                outgoing_quantity = total_quantity_in_basket
                 message = 'Количество товара обновлено в корзине.'
         else:
-            if quantity > product.quantity:
-                quantity = product.quantity
-            basket[str(product_id)] = {'quantity': quantity}
-            message = 'Товар добавлен в корзину.'
+            if incoming_quantity <= product.quantity:
+                outgoing_quantity = incoming_quantity
+                message = 'Товар добавлен в корзину.'
+            else:
+                outgoing_quantity = product.quantity
+                message = f'Максимальное доступное количество товара ({outgoing_quantity}) добавлено в корзину.'
 
-        request.session['basket'] = basket
+        basket_data[str(product_id)] = outgoing_quantity
+        redis_connection.set(guest_token, json.dumps(basket_data), ex=3600)
 
         response_data = {
             'message': message,
             'available_quantity': product.quantity,
-            'added_quantity': quantity,
+            'added_quantity': outgoing_quantity,
         }
-
+        print(f'Response DATA:{response_data}')
+        print(basket_data)
         return Response(response_data, status=status.HTTP_200_OK)
 
 
-class BasketUpdateAPIView(APIView):
-    def get(self, request, *args, **kwargs):
-        baskets = Basket.objects.filter(user=request.user)
-        serializer = BasketSerializer(baskets, many=True)
-        return Response({'current_basket': serializer.data}, status=status.HTTP_200_OK)
-
-    def post(self, request, *args, **kwargs):
-        serializer = BasketUpdateSerializer(data=request.data)
-
-        if serializer.is_valid():
-            quantity_items = serializer.validated_data.get('quantity_items', {})
-
-            for product_id, quantity in quantity_items.items():
-                basket = get_object_or_404(Basket, user=request.user, product=product_id)
-                if quantity <= basket.product.quantity:
-                    basket.quantity = quantity
-                    basket.save()
-                    message = 'Количество товара в корзине обновлено.'
-                else:
-                    message = f'Максимальное доступное количество товара ({basket.product.quantity}) добавлено в корзину.'
-
-            baskets = Basket.objects.filter(user=request.user)
-
-            serializer = BasketSerializer(baskets, many=True)
-
-            response_data = {
-                'message': message,
-                'current_basket': serializer.data,
-            }
-
-            return Response(response_data, status=status.HTTP_200_OK)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class BasketRemoveAPIView(APIView):
-    # {"removed_items": [1]}
-    def post(self, request, *args, **kwargs):
-        serializer = BasketUpdateSerializer(data=request.data)
-
-        if serializer.is_valid():
-            removed_items = serializer.validated_data.get('removed_items', [])
-
-            for removed_basket_id in removed_items:
-                basket = get_object_or_404(Basket, user=request.user, product=removed_basket_id)
-                basket.delete()
-
-            if request.user.is_authenticated:
-                baskets = Basket.objects.filter(user=request.user)
-            else:
-                basket_data = request.session.get('basket', {})
-                basket_ids = list(map(int, basket_data.keys()))
-                baskets = Basket.objects.filter(id__in=basket_ids)
-
-            serializer = BasketSerializer(baskets, many=True)
-
-            message = 'Товар был удален из корзины'
-            response_data = {
-                'message': message,
-                'current_basket': serializer.data,
-            }
-
-            return Response(response_data, status=status.HTTP_200_OK)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+# class BasketUpdateAPIView(APIView):
+#     authentication_classes = [JWTAuthentication]
+#     permission_classes = [IsAuthenticated]
+#
+#     def get(self, request, *args, **kwargs):
+#         baskets = Basket.objects.filter(user=request.user)
+#         serializer = BasketSerializer(baskets, many=True)
+#         return Response({'current_basket': serializer.data}, status=status.HTTP_200_OK)
+#
+#     def post(self, request, *args, **kwargs):
+#         serializer = BasketUpdateSerializer(data=request.data)
+#
+#         if serializer.is_valid():
+#             quantity_items = serializer.validated_data.get('quantity_items', {})
+#
+#             for product_id, quantity in quantity_items.items():
+#                 basket = get_object_or_404(Basket, user=request.user, product=product_id)
+#                 if quantity <= basket.product.quantity:
+#                     basket.quantity = quantity
+#                     basket.save()
+#                     message = 'Количество товара в корзине обновлено.'
+#                 else:
+#                     message = f'Максимальное доступное количество товара ({basket.product.quantity}) добавлено в корзину.'
+#
+#             baskets = Basket.objects.filter(user=request.user)
+#
+#             serializer = BasketSerializer(baskets, many=True)
+#
+#             response_data = {
+#                 'message': message,
+#                 'current_basket': serializer.data,
+#             }
+#
+#             return Response(response_data, status=status.HTTP_200_OK)
+#
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class BasketAnonymousUpdateAPIView(APIView):
-    # {
-    #     "quantity_items": {
-    #         "1": {
-    #             "quantity": 3
-    #         }
-    #     }
-    # }
-    def get(self, request, *args, **kwargs):
-        basket_data = request.session.get('basket', {})
-        serializer = BasketAnonymousUpdateSerializer(instance={'quantity_items': basket_data})
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    def post(self, request, *args, **kwargs):
-        serializer = BasketAnonymousUpdateSerializer(data=request.data)
-
-        if serializer.is_valid():
-            quantity_items = serializer.validated_data.get('quantity_items', {})
-
-            for product_id, quantity_data in quantity_items.items():
-                basket_data = request.session.get('basket', {})
-
-                if product_id in basket_data:
-                    product = Product.objects.get(id=product_id)
-                    basket_quantity = basket_data[product_id].get('quantity', 0)
-                    new_quantity = quantity_data.get('quantity', 0)
-                    if new_quantity <= product.quantity:
-                        basket_data[product_id]['quantity'] = new_quantity
-                        message = f'Количество товара в корзине изменено.'
-                    else:
-                        message = f'Максимальное доступное количество товара ({basket_quantity}) добавлено в корзину.'
-                else:
-                    message = f'Товар с id {product_id} не найден в корзине.'
-
-                request.session['basket'] = basket_data
-
-            basket_data = request.session.get('basket', {})
-
-            response_data = {
-                'message': message,
-                'current_basket': [
-                    {
-                        'quantity': data['quantity'],
-                        'product': int(product_id)
-                    } for product_id, data in basket_data.items()
-                ],
-            }
-
-            return Response(response_data, status=status.HTTP_200_OK)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+# class BasketRemoveAPIView(APIView):
+#     # {"removed_items": [1]}
+#     authentication_classes = [JWTAuthentication]
+#     permission_classes = [IsAuthenticated]
+#
+#     def post(self, request, *args, **kwargs):
+#         serializer = BasketUpdateSerializer(data=request.data)
+#
+#         if serializer.is_valid():
+#             removed_items = serializer.validated_data.get('removed_items', [])
+#
+#             for removed_basket_id in removed_items:
+#                 basket = get_object_or_404(Basket, user=request.user, product=removed_basket_id)
+#                 basket.delete()
+#
+#             if request.user.is_authenticated:
+#                 baskets = Basket.objects.filter(user=request.user)
+#             else:
+#                 basket_data = request.session.get('basket', {})
+#                 basket_ids = list(map(int, basket_data.keys()))
+#                 baskets = Basket.objects.filter(id__in=basket_ids)
+#
+#             serializer = BasketSerializer(baskets, many=True)
+#
+#             message = 'Товар был удален из корзины'
+#             response_data = {
+#                 'message': message,
+#                 'current_basket': serializer.data,
+#             }
+#
+#             return Response(response_data, status=status.HTTP_200_OK)
+#
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class BasketAnonymousRemoveAPIView(APIView):
-    # {
-    #     "removed_items": [1, 2, 3]
-    # }
-    def get(self, request, *args, **kwargs):
-        basket_data = request.session.get('basket', {})
-        serializer = BasketAnonymousUpdateSerializer(instance={'quantity_items': basket_data})
-        return Response(serializer.data, status=status.HTTP_200_OK)
+# class BasketAnonymousUpdateAPIView(APIView):
+#     # {
+#     #     "quantity_items": {
+#     #         "1": {
+#     #             "quantity": 3
+#     #         }
+#     #     }
+#     # }
+#     def get(self, request, *args, **kwargs):
+#         basket_data = request.session.get('basket', {})
+#         serializer = BasketAnonymousUpdateSerializer(instance={'quantity_items': basket_data})
+#         return Response(serializer.data, status=status.HTTP_200_OK)
+#
+#     def post(self, request, *args, **kwargs):
+#         serializer = BasketAnonymousUpdateSerializer(data=request.data)
+#
+#         if serializer.is_valid():
+#             quantity_items = serializer.validated_data.get('quantity_items', {})
+#
+#             for product_id, quantity_data in quantity_items.items():
+#                 basket_data = request.session.get('basket', {})
+#
+#                 if product_id in basket_data:
+#                     product = Product.objects.get(id=product_id)
+#                     basket_quantity = basket_data[product_id].get('quantity', 0)
+#                     new_quantity = quantity_data.get('quantity', 0)
+#                     if new_quantity <= product.quantity:
+#                         basket_data[product_id]['quantity'] = new_quantity
+#                         message = f'Количество товара в корзине изменено.'
+#                     else:
+#                         message = f'Максимальное доступное количество товара ({basket_quantity}) добавлено в корзину.'
+#                 else:
+#                     message = f'Товар с id {product_id} не найден в корзине.'
+#
+#                 request.session['basket'] = basket_data
+#
+#             basket_data = request.session.get('basket', {})
+#
+#             response_data = {
+#                 'message': message,
+#                 'current_basket': [
+#                     {
+#                         'quantity': data['quantity'],
+#                         'product': int(product_id)
+#                     } for product_id, data in basket_data.items()
+#                 ],
+#             }
+#
+#             return Response(response_data, status=status.HTTP_200_OK)
+#
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def post(self, request, *args, **kwargs):
-        serializer = BasketAnonymousUpdateSerializer(data=request.data)
 
-        if serializer.is_valid():
-            removed_items = serializer.validated_data.get('removed_items', [])
-
-            basket_data = request.session.get('basket', {})
-            for removed_basket_id in removed_items:
-                if removed_basket_id in basket_data:
-                    del basket_data[removed_basket_id]
-
-            request.session['basket'] = basket_data
-
-            basket_data = request.session.get('basket', {})
-
-            message = 'Товар был удален из корзины'
-            response_data = {
-                'message': message,
-                'current_basket': [
-                    {
-                        'quantity': data['quantity'],
-                        'product': int(product_id)
-                    } for product_id, data in basket_data.items()
-                ],
-            }
-
-            return Response(response_data, status=status.HTTP_200_OK)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+# class BasketAnonymousRemoveAPIView(APIView):
+#     # {
+#     #     "removed_items": [1, 2, 3]
+#     # }
+#     def get(self, request, *args, **kwargs):
+#         basket_data = request.session.get('basket', {})
+#         serializer = BasketAnonymousUpdateSerializer(instance={'quantity_items': basket_data})
+#         return Response(serializer.data, status=status.HTTP_200_OK)
+#
+#     def post(self, request, *args, **kwargs):
+#         serializer = BasketAnonymousUpdateSerializer(data=request.data)
+#
+#         if serializer.is_valid():
+#             removed_items = serializer.validated_data.get('removed_items', [])
+#
+#             basket_data = request.session.get('basket', {})
+#             for removed_basket_id in removed_items:
+#                 if removed_basket_id in basket_data:
+#                     del basket_data[removed_basket_id]
+#
+#             request.session['basket'] = basket_data
+#
+#             basket_data = request.session.get('basket', {})
+#
+#             message = 'Товар был удален из корзины'
+#             response_data = {
+#                 'message': message,
+#                 'current_basket': [
+#                     {
+#                         'quantity': data['quantity'],
+#                         'product': int(product_id)
+#                     } for product_id, data in basket_data.items()
+#                 ],
+#             }
+#
+#             return Response(response_data, status=status.HTTP_200_OK)
+#
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ChangeComparisonAPIView(APIView):

@@ -2,7 +2,7 @@ from django.urls import path
 
 
 from products.views import (AddToComparisonView, BasketAddAnonymousView,
-                            BasketAddView, BasketUpdateView, BuyInOneClickView,
+                            BasketAddView, BuyInOneClickView,
                             CategoryProductsListView, ClearComparisonView,
                             CompareView, DiscountedProductsView,
                             ProductDetailView,
@@ -20,7 +20,7 @@ urlpatterns = [
     path('page/<int:page>/', ProductsListView.as_view(), name='paginator'),
     path('baskets/add/<int:product_id>/', BasketAddView.as_view(), name='basket_add'),
     path('baskets/add_anonymous/<int:product_id>/', BasketAddAnonymousView.as_view(), name='basket_add_anonymous'),
-    path('baskets/update/', BasketUpdateView.as_view(), name='basket_update'),
+    # path('baskets/update/', BasketUpdateView.as_view(), name='basket_update'),
     path('buy_in_one_click/', BuyInOneClickView.as_view(), name='buy_in_one_click'),
     path('search/', ProductSearchView.as_view(), name='product_search'),
     path('tag/<str:tag_slug>/', TagProductsListView.as_view(), name='tag_products'),

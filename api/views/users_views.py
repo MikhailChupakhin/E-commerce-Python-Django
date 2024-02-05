@@ -4,19 +4,24 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
+from django_redis import get_redis_connection
 from rest_framework import status
+from rest_framework.authentication import SessionAuthentication
 from rest_framework.exceptions import NotFound
 from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.contrib.auth import authenticate, login
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework_simplejwt.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from api.serializers.orders_serializers import DeliveryMethodSerializer
 from api.serializers.products_serializers import ProductSerializer
 from api.serializers.users_serializers import UserLoginSerializer, UserRegistrationSerializer, UserSerializer, \
     UserProfileFormSerializer, UserCartSerializer, CallbackQuerySerializer, SubscriptionSerializer
+from api.utils.misc import gt_check_get_cached_basket
 from api.views.products_views import BaseAPIView
 from orders.models import DeliveryMethod
 from products.models import Basket, Product
@@ -59,13 +64,12 @@ class UserLoginAPIView(APIView):
 
         if user is not None:
             login(request, user)
-
             # refresh = RefreshToken.for_user(user)
             # access_token = str(refresh.access_token)
             # return Response({'access_token': access_token}, status=status.HTTP_200_OK)
-            return Response({'detail': 'Авторизация выполнена.'}, status=status.HTTP_200_OK)
+            return Response({'detail': '1', 'sk': f'{request.session.session_key}'}, status=status.HTTP_200_OK)
         else:
-            return Response({'detail': 'Неверные учетные данные.'}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response({'detail': '0'}, status=status.HTTP_401_UNAUTHORIZED)
 
 
 class UserRegistrationAPIView(APIView):
@@ -125,6 +129,7 @@ class UserRegistrationAPIView(APIView):
 
 class UserProfileAPIView(BaseAPIView, RetrieveUpdateAPIView):
     serializer_class = UserProfileFormSerializer
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get_object(self):
@@ -149,12 +154,13 @@ class UserProfileAPIView(BaseAPIView, RetrieveUpdateAPIView):
 
 
 class UserCartAPIView(BaseAPIView):
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
         context = {}
         base_response = super().get(request, *args, **kwargs)
-
+        print(self.request.user)
         basket_items = Basket.objects.filter(user=self.request.user)
         total_items = sum(item.quantity for item in basket_items)
         order_total_price = sum(item.product.total_price * item.quantity for item in basket_items)
@@ -179,6 +185,9 @@ class UserCartAPIView(BaseAPIView):
 
 
 class UserCartRemoveAPIView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
     def post(self, request, *args, **kwargs):
         try:
             user_basket = get_object_or_404(Basket, user=request.user, product_id=request.data.get('product_id'))
@@ -195,10 +204,13 @@ class UserCartRemoveAPIView(APIView):
 
 
 class UserCartUpdateAPIView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
     def post(self, request, *args, **kwargs):
         try:
             product_id = int(request.data.get('product_id'))
-            quantity_change_type = request.data.get('quantity_change_type')
+            quantity_change_type = request.data.get('operation_type')
 
             product = get_object_or_404(Product, id=product_id)
             user_basket = get_object_or_404(Basket, user=request.user, product_id=product_id)
@@ -238,13 +250,16 @@ class UserCartUpdateAPIView(APIView):
 
 
 class GuestCartAPIView(BaseAPIView):
+
     def get(self, request, *args, **kwargs):
+
+        _, _, basket_data = gt_check_get_cached_basket(request)
+
         context = {}
         base_response = super().get(request, *args, **kwargs)
-        baskets = request.session.get('basket', {})
         cart_items = []
 
-        for item_id, item_data in baskets.items():
+        for item_id, quantity in basket_data.items():
             product = get_object_or_404(Product, id=item_id)
 
             product_serializer = ProductSerializer(product)
@@ -252,7 +267,7 @@ class GuestCartAPIView(BaseAPIView):
 
             cart_items.append({
                 'product': product_data,
-                'quantity': item_data['quantity'],
+                'quantity': quantity,
             })
 
         delivery_methods = DeliveryMethod.objects.filter(is_active=True)
@@ -264,7 +279,6 @@ class GuestCartAPIView(BaseAPIView):
         response_data = {
             'cart_items': cart_items,
             'selected_delivery_method_id': selected_delivery_method_id,
-            'title': 'IMSOUND - Корзина (гость)',
             'delivery_methods': delivery_methods_data,
             'order_total_price': order_total_price,
         }
@@ -277,19 +291,18 @@ class GuestCartAPIView(BaseAPIView):
 
 class GuestCartRemoveAPIView(APIView):
     def post(self, request, *args, **kwargs):
+        guest_token, redis_connection, basket_data = gt_check_get_cached_basket(request)
+
         try:
             product_id = request.data.get('product_id')
             if product_id is None:
                 return Response({'error': 'Product ID is required in the request body'},
                                 status=status.HTTP_400_BAD_REQUEST)
 
-            baskets = request.session.get('basket', {})
-            str_product_id = str(product_id)
-
-            if str_product_id in baskets:
-                del baskets[str_product_id]
-                request.session['basket'] = baskets
-                order_total_price = recalculate_total_price_guest(baskets)
+            if str(product_id) in basket_data:
+                del basket_data[str(product_id)]
+                redis_connection.set(guest_token, json.dumps(basket_data), ex=3600)
+                order_total_price = recalculate_total_price_guest(basket_data)
                 response_data = {'success': True, 'order_total_price': order_total_price}
                 return Response(response_data, status=status.HTTP_200_OK)
             else:
@@ -300,43 +313,57 @@ class GuestCartRemoveAPIView(APIView):
 
 class GuestCartUpdateAPIView(APIView):
     def post(self, request, *args, **kwargs):
+        guest_token, redis_connection, basket_data = gt_check_get_cached_basket(request)
         try:
             product_id = request.data.get('product_id')
-            quantity_change_type = request.data.get('quantity_change_type')
+            quantity_change_type = request.data.get('operation_type')
 
             product = get_object_or_404(Product, id=product_id)
-            baskets = request.session.get('basket', {})
-            str_product_id = str(product_id)
-
-            if str_product_id in baskets:
+            product_id = str(product_id)
+            if product_id in basket_data:
                 if quantity_change_type == 'increase':
-                    new_quantity = baskets[str_product_id]['quantity'] + 1
+                    new_quantity = basket_data[product_id] + 1
                     if new_quantity <= product.quantity:
-                        baskets[str_product_id]['quantity'] = new_quantity
+                        basket_data[product_id] = new_quantity
                     else:
                         return Response({'error': 'Exceeded available quantity for this product'}, status=status.HTTP_200_OK)
                 elif quantity_change_type == 'decrease':
-                    if baskets[str_product_id]['quantity'] > 1:
-                        baskets[str_product_id]['quantity'] -= 1
+                    if basket_data[product_id]['quantity'] > 1:
+                        basket_data[product_id]['quantity'] -= 1
 
-                request.session['basket'] = baskets
-                order_total_price = recalculate_total_price_guest(baskets)
+                redis_connection.set(guest_token, json.dumps(basket_data), ex=3600)
+                order_total_price = recalculate_total_price_guest(basket_data)
+                updated_cart = get_updated_cart_data_guest(basket_data)
 
-                updated_cart = get_updated_cart_data_guest(baskets)
                 response_data = {'success': True, 'order_total_price': order_total_price, 'updated_cart': updated_cart}
                 return Response(response_data, status=status.HTTP_200_OK)
             else:
                 return Response({'error': 'Basket item not found'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            print("Error:", str(e))  # Отладочный вывод
+            print("Error:", str(e))
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-class SaveDeliveryToSessionAPIView(APIView):
+class SaveDeliveryAUTHUserAPIView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
     def post(self, request, *args, **kwargs):
         delivery_method_id = request.data.get('deliveryMethodId')
-        request.session['selected_delivery_method_id'] = delivery_method_id
-        return Response({'message': 'Данные сохранены в сессии.'}, status=status.HTTP_200_OK)
+        redis_connection = get_redis_connection("default")
+        cache_key = f'user_{request.user.id}_del_method'
+        redis_connection.set(cache_key, delivery_method_id, ex=3600)
+        return Response({'message': 'Данные о доставке сохранены.'}, status=status.HTTP_200_OK)
+
+
+class SaveDeliveryNOAUTHUserAPIView(APIView):
+    def post(self, request, *args, **kwargs):
+        delivery_method_id = request.data.get('deliveryMethodId')
+        redis_connection = get_redis_connection("default")
+        guest_token = request.headers.get('guest-token')
+        cache_key = f'guest_{guest_token}_del_method'
+        redis_connection.set(cache_key, delivery_method_id, ex=3600)
+        return Response({'message': 'Данные о доставке сохранены.'}, status=status.HTTP_200_OK)
 
 
 class EmailVerificationAPIView(APIView):
@@ -363,10 +390,8 @@ class CreateCallbackQueryAPIView(APIView):
         post_data = json.loads(request.body.decode("utf-8"))
         name = post_data.get('name')
         phone = post_data.get('phone')
-        # Создание словаря с данными для сериализации
         data = {'name': name, 'phone': phone}
 
-        # Создание экземпляра сериализатора
         serializer = CallbackQuerySerializer(data=data)
 
         if serializer.is_valid():
@@ -397,6 +422,9 @@ class SubscribeNewsAPIView(APIView):
 
 
 class ApplyPromoCodeAPIView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
     def post(self, request, *args, **kwargs):
         promo_code = request.data.get('promo_code')
 

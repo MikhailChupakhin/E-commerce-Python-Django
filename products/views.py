@@ -430,7 +430,6 @@ class BasketAddAnonymousView(View):
         product = Product.objects.get(id=product_id)
         post_data = json.loads(request.body.decode("utf-8"))
         quantity = int(post_data.get('quantity', 1))
-
         basket = request.session.get('basket', {})
 
         if product.quantity == 0:
@@ -463,29 +462,29 @@ class BasketAddAnonymousView(View):
         return JsonResponse(response_data)
 
 
-class BasketUpdateView(View):
-    def post(self, request):
-        removed_items = request.POST.getlist('removed_items[]')
-        quantity_items = {}
-
-        for key, value in request.POST.items():
-            if key.startswith('quantity_'):
-                item_id = key.split('_')[1]
-                quantity_items[item_id] = int(value)
-
-        for item_id, quantity in quantity_items.items():
-            basket = Basket.objects.get(id=item_id)
-            basket.quantity = quantity
-            basket.save()
-
-        Basket.objects.filter(id__in=removed_items).delete()
-
-        message = 'Basket was updated.'
-
-        response_data = {
-            'message': message,
-        }
-        return JsonResponse(response_data)
+# class BasketUpdateView(View):
+#     def post(self, request):
+#         removed_items = request.POST.getlist('removed_items[]')
+#         quantity_items = {}
+#
+#         for key, value in request.POST.items():
+#             if key.startswith('quantity_'):
+#                 item_id = key.split('_')[1]
+#                 quantity_items[item_id] = int(value)
+#
+#         for item_id, quantity in quantity_items.items():
+#             basket = Basket.objects.get(id=item_id)
+#             basket.quantity = quantity
+#             basket.save()
+#
+#         Basket.objects.filter(id__in=removed_items).delete()
+#
+#         message = 'Basket was updated.'
+#
+#         response_data = {
+#             'message': message,
+#         }
+#         return JsonResponse(response_data)
 
 
 class AddToComparisonView(View):

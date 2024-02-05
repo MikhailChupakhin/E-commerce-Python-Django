@@ -12,14 +12,15 @@ def recalculate_total_price(cart_items):
     return order_total_price
 
 
-def recalculate_total_price_guest(baskets):
+def recalculate_total_price_guest(basket_data):
     order_total_price = 0
 
-    for item_id, item_data in baskets.items():
+    for item_id, quantity in basket_data.items():
         product = Product.objects.get(id=int(item_id))
-        order_total_price += product.total_price * item_data['quantity']
+        order_total_price += product.total_price * quantity
 
     return order_total_price
+
 
 def get_updated_cart_data(baskets):
     updated_cart = {
@@ -35,19 +36,21 @@ def get_updated_cart_data(baskets):
         })
     return updated_cart
 
-def get_updated_cart_data_guest(baskets):
+
+def get_updated_cart_data_guest(basket_data):
     updated_cart = {
         'cart_items': []
     }
-    for product_id, item_data in baskets.items():
-        product = get_object_or_404(Product, id=product_id)
+    for item_id, quantity in basket_data.items():
+        product = get_object_or_404(Product, id=item_id)
         updated_cart['cart_items'].append({
             'product_id': product.id,
             'product_name': product.name,
-            'quantity': item_data['quantity'],
+            'quantity': quantity,
             'price': product.total_price,
         })
     return updated_cart
+
 
 def clear_user_session(session):
     session.clear()

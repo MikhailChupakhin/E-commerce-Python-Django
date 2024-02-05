@@ -83,7 +83,6 @@ class Order(models.Model):
 
             delivery_price = self.delivery_method.price
 
-            # Расчет итоговой суммы
             self.total_sum = products_total + delivery_price
         except Exception as e:
             self.total_sum = 0
@@ -120,12 +119,10 @@ class Order(models.Model):
 
     def update_after_order(self):
         baskets = Basket.objects.filter(user=self.initiator)
-        # Создаем список для хранения информации о недоступных товарах
         unavailable_products = []
 
         for basket in baskets:
             product = basket.product
-            # Проверяем доступное количество товара
             if product.quantity >= basket.quantity:
                 order_item = OrderItem(
                     order=self,
@@ -135,11 +132,9 @@ class Order(models.Model):
                 )
                 order_item.save()
             else:
-                # Если товара недостаточно, добавляем в список
                 unavailable_quantity = basket.quantity - product.quantity
                 unavailable_products.append((product, unavailable_quantity))
 
-                # Добавляем в заказ доступное количество товара
                 order_item = OrderItem(
                     order=self,
                     product=product,
@@ -148,7 +143,6 @@ class Order(models.Model):
                 )
                 order_item.save()
 
-            # Если есть недоступные товары, создаем технический комментарий
         if unavailable_products:
             unavailable_info = ", ".join(
                 [f"{product.name} ({quantity} шт.)" for product, quantity in unavailable_products])
@@ -158,17 +152,15 @@ class Order(models.Model):
 
         baskets.delete()
 
-    def update_after_order_session(self, session_basket_data):
+    def update_after_order_noauth(self, basket_data):
         unavailable_products = []
 
-        for product_id, data in session_basket_data.items():
-            quantity = data.get('quantity')
+        for product_id, quantity in basket_data.items():
             try:
                 product = Product.objects.get(id=product_id)
             except Product.DoesNotExist:
                 continue
 
-            # Проверяем доступное количество товара
             if product.quantity >= quantity:
                 order_item = OrderItem(
                     order=self,
@@ -178,11 +170,9 @@ class Order(models.Model):
                 )
                 order_item.save()
             else:
-                # Если товара недостаточно, добавляем в список
                 unavailable_quantity = quantity - product.quantity
                 unavailable_products.append((product, unavailable_quantity))
 
-                # Добавляем в заказ доступное количество товара
                 order_item = OrderItem(
                     order=self,
                     product=product,
@@ -191,7 +181,6 @@ class Order(models.Model):
                 )
                 order_item.save()
 
-        # Если есть недоступные товары, создаем технический комментарий
         if unavailable_products:
             unavailable_info = ", ".join(
                 [f"{product.name} ({quantity} шт.)" for product, quantity in unavailable_products])
@@ -213,15 +202,14 @@ class OrderItem(models.Model):
 
     def save(self, *args, **kwargs):
         self.product_name = self.product.name
-        # Сохраняем предыдущее значение quantity перед сохранением объекта
         if self.pk:
-            # Получаем текущее значение quantity из базы данных
             current_order_item = OrderItem.objects.get(pk=self.pk)
             self._previous_quantity = current_order_item.quantity
         else:
-            self._previous_quantity = 0  # Значение для новых объектов
+            self._previous_quantity = 0
 
         super(OrderItem, self).save(*args, **kwargs)
+
 
 @receiver(post_save, sender=OrderItem)
 def update_product_quantity(sender, instance, **kwargs):

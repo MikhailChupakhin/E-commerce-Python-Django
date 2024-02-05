@@ -13,9 +13,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
       let url;
       if (isAuthenticated === 1) {
-        url = `/products/baskets/add/${productId}/`;
+        url = `/catalog/baskets/add/${productId}/`;
       } else {
-        url = `/products/baskets/add_anonymous/${productId}/`;
+        url = `/catalog/baskets/add_anonymous/${productId}/`;
       }
 
       fetch(url, {
