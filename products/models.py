@@ -43,6 +43,7 @@ class ProductSubCategory(models.Model):
     description = models.TextField(null=True, blank=True)
     slug = models.SlugField(unique=True, blank=True)
     parent_category = models.ForeignKey(ProductCategory, on_delete=models.CASCADE)
+    parent_category_slug = models.SlugField(editable=False, blank=True)
     image = models.ImageField(upload_to='subcategory_images/', null=True, blank=True)
     is_index_banner = models.BooleanField(default=False)
 
@@ -54,6 +55,8 @@ class ProductSubCategory(models.Model):
         if not self.slug:
             transliterated_name = translit(self.name, 'ru', reversed=True)
             self.slug = slugify(transliterated_name)
+        if not self.parent_category_slug:
+            self.parent_category_slug = self.parent_category.slug
         super(ProductSubCategory, self).save(*args, **kwargs)
 
     def __str__(self):

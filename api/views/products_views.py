@@ -1,7 +1,7 @@
 import json
 from statistics import mean
 
-from django.db.models import Q
+from django.db.models import Q, Min, Max, Exists, OuterRef
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django_redis import get_redis_connection
@@ -20,12 +20,12 @@ from reviews.models import ProductReview
 from ..serializers.products_serializers import FeaturedProductsSerializer, ProductSerializer, \
     ProductSubCategorySerializer, ProductCategorySerializer, ManufacturerSerializer, BuyInOneClickSerializer, \
     BasketAddSerializer, BasketUpdateSerializer, BasketSerializer, \
-    BasketAnonymousUpdateSerializer, FeaturedSubcategorySerializer
+    BasketAnonymousUpdateSerializer, FeaturedSubcategorySerializer, ProductBannerSerializer, ProductQuickViewSerializer
 from ..serializers.reviews_serializers import ProductReviewSerializer
-from ..serializers.seo_manager_serializers import InfoPageSerializer, SliderImageSerializer
+from ..serializers.seo_manager_serializers import InfoPageSerializer, SliderImageSerializer, TagSerializer
 from products.models import Basket, FeaturedProducts, Product, ProductCategory, Manufacturer, ProductSubCategory, \
     ComparisonList, FeaturedSubcategory
-from seo_manager.models import InfoPage, SliderImage
+from seo_manager.models import InfoPage, SliderImage, Tag
 from api.utils.breadcrumbs import get_breadcrumbs
 from api.utils.seo_attributes import get_seo_attributes
 from products.views import apply_filters_and_sort
@@ -33,20 +33,15 @@ from ..utils.misc import gt_check_get_cached_basket
 
 
 class BaseAPIView(APIView):
-    # authentication_classes = [JWTAuthentication]
-    # permission_classes = [IsAuthenticated]
-
     def get_context(self):
-        breadcrumbs_data = get_breadcrumbs(self.request)
-        seo_data = get_seo_attributes(self.request)
 
-        if self.request.user.is_authenticated:
-            basket_items = Basket.objects.filter(user=self.request.user)
-            total_items = sum(item.quantity for item in basket_items)
-            products_in_cart = total_items
-        else:
-            basket_items = self.request.session.get('basket', {})
-            products_in_cart = len(basket_items)
+        # if self.request.user.is_authenticated:
+        #     basket_items = Basket.objects.filter(user=self.request.user)
+        #     total_items = sum(item.quantity for item in basket_items)
+        #     products_in_cart = total_items
+        # else:
+        #     basket_items = self.request.session.get('basket', {})
+        #     products_in_cart = len(basket_items)
 
         categories = ProductCategory.objects.all()
         category_data = ProductCategorySerializer(categories, many=True).data
@@ -56,15 +51,12 @@ class BaseAPIView(APIView):
             subcategories = category.get_subcategories()
             subcategories_data.append(
                 {
-                    'category_name': category.name,
+                    'category_id': category.id,
                     'subcategories_pack': ProductSubCategorySerializer(subcategories, many=True).data
                 }
             )
 
         context = {
-            "seo_data": seo_data,
-            "breadcrumbs": breadcrumbs_data,
-            "products_in_cart": products_in_cart,
             "categories": category_data,
             "subcategories": subcategories_data
         }
@@ -75,19 +67,17 @@ class BaseAPIView(APIView):
         return Response(data=context, status=status.HTTP_200_OK)
 
 
-class IndexAPIView(BaseAPIView):
+class IndexAPIView(APIView):
     def get(self, request, *args, **kwargs):
         context = {}
-
-        base_response = super().get(request, *args, **kwargs)
-        context.update(base_response.data)
-
+        seo_data = {'title': 'Index Default Title', 'meta-description': 'Index Default Descr'}
+        context['seo_data'] = seo_data
         active_sliders = SliderImage.objects.filter(is_active=True)
         sliders_data = SliderImageSerializer(active_sliders, many=True).data
         context['sliders_and_banners'] = {'sliders': sliders_data, 'banners': []}
 
         index_banners = ProductSubCategory.objects.filter(is_index_banner=True)
-        banners_data = ProductSubCategorySerializer(index_banners, many=True).data
+        banners_data = ProductBannerSerializer(index_banners, many=True).data
         context['sliders_and_banners']['banners'] = banners_data
 
         featured_products = FeaturedProducts.objects.first()
@@ -108,7 +98,6 @@ class CustomPagination(PageNumberPagination):
 
 
 class BaseProductListView(ListAPIView):
-
     serializer_class = ProductSerializer
     pagination_class = CustomPagination
     model = Product
@@ -117,10 +106,6 @@ class BaseProductListView(ListAPIView):
     def get_queryset(self):
         queryset = super().get_queryset()
         return apply_filters_and_sort(queryset, self.request)
-
-    def get_base_context(self, request):
-        base_view = BaseAPIView(request=request)
-        return base_view.get_context()
 
     def paginate_queryset_and_serialize(self, queryset, request):
         paginator = self.pagination_class()
@@ -133,8 +118,11 @@ class BaseProductListView(ListAPIView):
 
     def list(self, request, *args, **kwargs):
         context = {}
-        base_context = self.get_base_context(request)
-        context.update(base_context)
+        queryset, set_params = self.get_queryset(request, *args, **kwargs)
+        breadcrumbs = get_breadcrumbs(set_params)
+        seo_data = get_seo_attributes(set_params)
+        context['breadcrumbs'] = breadcrumbs
+        context['seo_data'] = seo_data
 
         pagination_parameter = self.request.META.get('HTTP_PAGINATIONPARAM', '16')
 
@@ -143,14 +131,37 @@ class BaseProductListView(ListAPIView):
         except:
             self.pagination_class.page_size = 16
 
-        manufacturers_serializer = ManufacturerSerializer(Manufacturer.objects.all(), many=True)
+
+        manufacturers_serializer = ManufacturerSerializer((
+            Manufacturer.objects
+            .annotate(has_products=Exists(Product.objects.filter(manufacturer=OuterRef('pk'))))
+            .filter(has_products=True)
+            .order_by('name')
+            .all()
+        ), many=True)
+
         manufacturers_data = manufacturers_serializer.data
 
-        queryset = self.filter_queryset(self.get_queryset())
+        price_range = Product.objects.aggregate(
+            min_price=Min('total_price'),
+            max_price=Max('total_price')
+        )
+
+        min_price = price_range.get('min_price', 0)
+        max_price = price_range.get('max_price', 0)
+
+        tags_serializer = TagSerializer(Tag.objects.all(), many=True)
+        tags_data = tags_serializer.data
+        # queryset, mixed_params = self.filter_queryset(self.get_queryset())
         serialized_data, products_count, paginated_response, total_pages, current_page = self.paginate_queryset_and_serialize(queryset, request)
 
         context.update({
             'manufacturers': manufacturers_data,
+            'price_interval': {
+                'min': min_price,
+                'max': max_price
+            },
+            'tags_data': tags_data,
             'product_list': serialized_data,
             'products_count': products_count,
             'total_pages': total_pages,
@@ -167,61 +178,85 @@ class BaseProductListView(ListAPIView):
 
         return response
 
+
+class TagProductsAPIView(BaseProductListView):
+    serializer_class = ProductSerializer
+    pagination_class = PageNumberPagination
+
+    def get_set_params(self):
+        url = self.request.path
+        tag_slug = self.kwargs.get('tag_slug')
+        tag = get_object_or_404(Tag, slug=tag_slug)
+        return {'page_type': 'tag',
+                'url': url,
+                'tag_name': tag.name,
+                'tag_id': tag.id}
+
+    def get_queryset(self, *args, **kwargs):
+        set_params = self.get_set_params()
+
+        queryset = super().get_queryset()
+        queryset = apply_filters_and_sort(queryset.filter(tags__id=set_params['tag_id']), self.request)
+
+        return queryset, set_params
+
     
 class ProductsListAPIView(BaseProductListView):
     serializer_class = ProductSerializer
     pagination_class = PageNumberPagination
     queryset = Product.objects.all()
 
-    def get_queryset(self):
+    def get_queryset(self, *args, **kwargs):
+        set_params = {'page_type': 'catalog', 'url': '/catalog'}
         queryset = super().get_queryset()
-        return queryset
+        return queryset, set_params
 
 
 class CategoryProductsListAPIView(BaseProductListView):
     serializer_class = ProductSerializer
     pagination_class = PageNumberPagination
 
-    def get_queryset(self):
-        queryset = super().get_queryset()
+    def get_set_params(self):
+        url = self.request.path
         category_slug = self.kwargs.get('category_slug')
         category = get_object_or_404(ProductCategory, slug=category_slug)
+        return {'page_type': 'category',
+                'url': url,
+                'category_name': category.name,
+                'category_id': category.id}
 
-        queryset = apply_filters_and_sort(queryset.filter(category=category), self.request)
-
-        return queryset
+    def get_queryset(self, *args, **kwargs):
+        set_params = self.get_set_params()
+        queryset = super().get_queryset()
+        queryset = apply_filters_and_sort(queryset.filter(category=set_params['category_id']), self.request)
+        return queryset, set_params
 
 
 class SubcategoryProductsListAPIView(BaseProductListView):
     serializer_class = ProductSerializer
     pagination_class = PageNumberPagination
 
-    def get_queryset(self):
-        queryset = super().get_queryset()
+    def get_set_params(self):
+        url = self.request.path
         category_slug = self.kwargs.get('category_slug')
+        category = get_object_or_404(ProductCategory, slug=category_slug)
         subcategory_slug = self.kwargs.get('subcategory_slug')
-        sub_category = get_object_or_404(ProductSubCategory, slug=subcategory_slug)
+        subcategory = get_object_or_404(ProductSubCategory, slug=subcategory_slug)
 
-        queryset = apply_filters_and_sort(queryset.filter(sub_category=sub_category), self.request)
+        return {'page_type': 'subcategory',
+                'url': url,
+                'category_name': category.name,
+                'category_slug': category.slug,
+                'category_id': category.id,
+                'subcategory_name': subcategory.name,
+                'subcategory_slug': subcategory.slug,
+                'subcategory_id': subcategory.id}
 
-        return queryset
-
-
-class TagProductsAPIView(BaseProductListView):
-    serializer_class = ProductSerializer
-    pagination_class = PageNumberPagination
-
-    def get_queryset(self):
-        tag_slug = self.kwargs['tag_slug']
-
-        cache_key = f'tag_products_{tag_slug}_queryset'
-        queryset = cache.get(cache_key)
-
-        if queryset is None:
-            queryset = Product.objects.filter(tags__slug=tag_slug)
-            cache.set(cache_key, queryset, 3600)
-
-        return queryset
+    def get_queryset(self, *args, **kwargs):
+        set_params = self.get_set_params()
+        queryset = super().get_queryset()
+        queryset = apply_filters_and_sort(queryset.filter(sub_category=set_params['subcategory_id']), self.request)
+        return queryset, set_params
 
 
 class ProductSearchAPIView(BaseProductListView):
@@ -229,6 +264,7 @@ class ProductSearchAPIView(BaseProductListView):
     pagination_class = PageNumberPagination
 
     def get_queryset(self):
+        set_params = {'page_type': 'search', 'url': '/search'}
         keyword = self.request.GET.get('keyword')
         if keyword:
             cache_key = f"product_search_{keyword}"
@@ -244,9 +280,9 @@ class ProductSearchAPIView(BaseProductListView):
                 cached_queryset = products
                 cache.set(cache_key, cached_queryset, 3600)
 
-            return cached_queryset
+            return cached_queryset, set_params
         else:
-            return Product.objects.none()
+            return Product.objects.none(), set_params
 
 
 class DiscountedProductsAPIView(BaseProductListView):
@@ -254,6 +290,7 @@ class DiscountedProductsAPIView(BaseProductListView):
     pagination_class = PageNumberPagination
 
     def get_queryset(self):
+        set_params = {'page_type': 'discounts', 'url': '/discounts'}
         cache_key = "discounted_products"
 
         cached_queryset = cache.get(cache_key)
@@ -263,20 +300,47 @@ class DiscountedProductsAPIView(BaseProductListView):
             cached_queryset = products
             cache.set(cache_key, cached_queryset, 3600)
 
-        return cached_queryset
+        return cached_queryset, set_params
+
+
+class ProductQuickviewAPIView(APIView):
+    def get(self, request, product_id, *args, **kwargs):
+        print('ProductQuickviewAPIView called')
+        data = {}
+
+        product = get_object_or_404(Product, id=product_id)
+        product_serializer = ProductQuickViewSerializer(product)
+
+        data.update({
+            'product': product_serializer.data,
+        })
+
+        return Response(data, status=status.HTTP_200_OK)
 
 
 class ProductDetailAPIView(BaseAPIView):
+    ''' Required refactory of Viewed Products logic (Redis cache?) '''
+    def get_set_params(self):
+        url = self.request.path
+        product_id = self.kwargs.get('product_id')
+        product = get_object_or_404(Product, id=product_id)
+        return {'page_type': 'product',
+                'url': url,
+                'category_name': product.category.name,
+                'category_slug': product.category.slug,
+                'subcategory_name': product.sub_category.name,
+                'subcategory_slug': product.sub_category.slug,
+                'product_name': product.name,
+                'product_slug': product.slug,
+                'product_id': product.id}
+
     def get(self, request, *args, **kwargs):
         data = {}
-        base_context = self.get_context()
+        set_params = self.get_set_params()
+        base_context = self.get_context(set_params=set_params)
         data.update(base_context)
 
-        product_slug = kwargs.get('product_slug')
-        product_id = kwargs.get('product_id')
-
-        product = get_object_or_404(Product, id=product_id)
-
+        product = get_object_or_404(Product, id=set_params['product_id'])
         product_serializer = ProductSerializer(product)
 
         reviews = ProductReview.objects.filter(product=product, moderated=True)
@@ -296,7 +360,7 @@ class ProductDetailAPIView(BaseAPIView):
         similar_products = Product.objects.filter(sub_category=product.sub_category).exclude(
             id__in=viewed_product_ids).exclude(id=product.id)[:10]
 
-        # !!! Определиться с механизмами персональных рекомендаций
+        '''Определиться с механизмом персональных рекомендаций'''
         recommended_products = Product.objects.exclude(id__in=viewed_product_ids).exclude(
             id__in=similar_products.values_list('id', flat=True))[:10]
 
@@ -357,18 +421,22 @@ class BasketAddAPIView(APIView):
             if total_quantity_in_basket > product.quantity:
                 basket.quantity = product.quantity
                 basket.save()
+                code = 2
                 message = f'Максимальное доступное количество товара ({product.quantity}) добавлено в корзину.'
             else:
                 basket.quantity = total_quantity_in_basket
                 basket.save()
+                code = 1
                 message = 'Количество товара обновлено в корзине.'
         except Basket.DoesNotExist:
             if quantity > product.quantity:
                 quantity = product.quantity
             Basket.objects.create(user=request.user, product=product, quantity=quantity)
+            code = 0
             message = 'Товар добавлен в корзину.'
 
         response_data = {
+            'code': code,
             'message': message,
             'available_quantity': product.quantity,
             'added_quantity': quantity,
@@ -377,7 +445,7 @@ class BasketAddAPIView(APIView):
         return Response(response_data, status=status.HTTP_200_OK)
 
 
-class BasketAddAnonymousAPIView(APIView):
+class BasketAddGuestAPIView(APIView):
     # {"product_id": 1, "quantity": 2}
 
     def post(self, request):
@@ -385,7 +453,6 @@ class BasketAddAnonymousAPIView(APIView):
         serializer.is_valid(raise_exception=True)
 
         guest_token, redis_connection, basket_data = gt_check_get_cached_basket(request)
-
         product_id = serializer.validated_data['product_id']
         incoming_quantity = serializer.validated_data.get('quantity', 1)
 
@@ -405,22 +472,27 @@ class BasketAddAnonymousAPIView(APIView):
             total_quantity_in_basket = basket_item_quantity + incoming_quantity
             if total_quantity_in_basket > product.quantity:
                 outgoing_quantity = product.quantity
+                code = 2
                 message = f'Максимальное доступное количество товара ({product.quantity}) добавлено в корзину.'
             else:
                 outgoing_quantity = total_quantity_in_basket
+                code = 1
                 message = 'Количество товара обновлено в корзине.'
         else:
             if incoming_quantity <= product.quantity:
                 outgoing_quantity = incoming_quantity
+                code = 0
                 message = 'Товар добавлен в корзину.'
             else:
                 outgoing_quantity = product.quantity
+                code = 2
                 message = f'Максимальное доступное количество товара ({outgoing_quantity}) добавлено в корзину.'
 
         basket_data[str(product_id)] = outgoing_quantity
         redis_connection.set(guest_token, json.dumps(basket_data), ex=3600)
 
         response_data = {
+            'code': code,
             'message': message,
             'available_quantity': product.quantity,
             'added_quantity': outgoing_quantity,

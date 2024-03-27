@@ -33,9 +33,9 @@ def apply_filters_and_sort(queryset, request):
         queryset = queryset.order_by('name')
     elif sort_param == '-name':
         queryset = queryset.order_by('-name')
-    elif sort_param == 'by_price':
+    elif sort_param == 'price':
         queryset = queryset.order_by('price')
-    elif sort_param == '-by_price':
+    elif sort_param == '-price':
         queryset = queryset.order_by('-price')
     elif not sort_param:
         queryset = queryset.order_by('id')

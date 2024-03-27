@@ -8,19 +8,27 @@ from products.models import Product, ProductCategory, ProductSubCategory, Manufa
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
-        fields = '__all__'
+        fields = ['id', 'name', 'description', 'price', 'quantity', 'image', 'slug', 'is_new',
+                  'total_price', 'article_number', 'category', 'sub_category',
+                  'manufacturer']
 
 
 class ProductCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductCategory
-        fields = '__all__'
+        fields = ['id', 'name', 'slug']
 
 
 class ProductSubCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductSubCategory
-        fields = '__all__'
+        fields = ['id', 'name', 'slug', 'parent_category', 'parent_category_slug']
+
+
+class ProductBannerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductSubCategory
+        fields = ['id', 'name', 'description', 'slug', 'parent_category_slug', 'image']
 
 
 class ManufacturerSerializer(serializers.ModelSerializer):
@@ -46,7 +54,7 @@ class FeaturedProductsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = FeaturedProducts
-        fields = '__all__'
+        fields = ['products']
 
 
 class BuyInOneClickSerializer(serializers.ModelSerializer):
@@ -74,6 +82,16 @@ class BasketSerializer(serializers.ModelSerializer):
     class Meta:
         model = Basket
         fields = '__all__'
+
+
+class BasketCheckoutSerializer(serializers.ModelSerializer):
+    product_name = serializers.CharField(source='product.name')
+    quantity = serializers.IntegerField()
+    total_price = serializers.DecimalField(max_digits=10, decimal_places=2, source='product.total_price')
+
+    class Meta:
+        model = Basket
+        fields = ('product_name', 'quantity', 'total_price')
 
 
 class BasketAnonymousSerializer(serializers.Serializer):
@@ -108,3 +126,11 @@ class FeaturedSubcategorySerializer(serializers.ModelSerializer):
             subcategory_slug = obj.subcategory.slug
             return f"/{parent_category_slug}/{subcategory_slug}"
         return None
+
+
+class ProductQuickViewSerializer(serializers.ModelSerializer):
+    characteristics = ProductCharacteristicSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Product
+        fields = ['id', 'name', 'image', 'description', 'price', 'total_price', 'quantity', 'characteristics']

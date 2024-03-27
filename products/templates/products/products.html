@@ -168,11 +168,11 @@
                         <form id="products_sorting_form" action="" method="get">
                             <div class="shop-select">
                                 <select id="sort-select" name="sort">
-                                    {% if "/products" in request.path %}
+                                    {% if "/catalog" in request.path %}
                                         <option value="name">По названию (А-Я)</option>
                                         <option value="-name">По названию (Я-А)</option>
-                                        <option value="by_price">Цена (нарастание)</option>
-                                        <option value="-by_price">Цена (убывание)</option>
+                                        <option value="price">Цена (нарастание)</option>
+                                        <option value="-price">Цена (убывание)</option>
                                     {% endif %}
                                 </select>
                                 <button type="submit">Сортировать</button>
@@ -463,7 +463,7 @@
                             </ul>
                         </div>
                     {% else %}
-                        <div class="pro-pagination-style text-center mtb-50px">
+                       <div class="pro-pagination-style text-center mtb-50px">
                             <ul class="pagination justify-content-center">
                                 <li class="page-item {% if not page_obj.has_previous %} disabled {% endif %}">
                                     <a class="page-link"

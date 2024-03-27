@@ -6,11 +6,12 @@ from .models import (BuyInOneClick, DeliveryMethod, Order, OrderItem,
 
 @admin.register(DeliveryMethod)
 class DeliveryMethodAdmin(admin.ModelAdmin):
-    list_display = ['name', 'is_active', 'price', 'id']
+    list_display = ['name', 'is_active', 'price', 'id', 'form_fields']
     fields = (
         'id', 'name',
         'price',
         'is_active',
+        'form_fields',
         'description',
     )
     readonly_fields = ['id']
@@ -35,7 +36,7 @@ class OrderItemInline(admin.TabularInline):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ['created', 'status', 'tech_comment', 'promo_code', 'get_total_sum', 'first_name', 'phone', 'address']
+    list_display = ['created', 'delivery_method', 'status', 'tech_comment', 'promo_code', 'get_total_sum', 'first_name', 'phone', 'address']
     fields = (
         'id', 'created', 'promo_code',
         'payment_method', 'delivery_method',

@@ -7,11 +7,9 @@ import json
 def gt_check_get_cached_basket(request):
     guest_token = request.headers.get('guest-token')
     if not guest_token:
-        return None, Response({'message': 'Отсутствует guest_token в заголовках запроса.'},
-                            status=status.HTTP_400_BAD_REQUEST)
+        return None, None, None
 
     redis_connection = get_redis_connection("default")
-
     basket_data = redis_connection.get(guest_token)
 
     if basket_data:

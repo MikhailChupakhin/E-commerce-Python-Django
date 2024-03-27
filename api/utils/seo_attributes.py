@@ -1,60 +1,69 @@
-from urllib.parse import urlparse
+import os
 
 from seo_manager.models import SEOAttributes
-from products.models import ProductSubCategory, ProductCategory, Product
-from blog.models import Article
 
 
-def get_seo_attributes(request):
-    full_url = request.build_absolute_uri()
-    parsed_url = urlparse(full_url)
-
-    domain_name = parsed_url.scheme + '://' + parsed_url.netloc
-    path = parsed_url.path
-    clear_path = path[4:]
-    path_parts = [part for part in clear_path.split('/') if part]
-
-    result = {}
-    if path_parts[0] == 'index':
+def get_seo_attributes(set_params):
+    url_full = os.getenv('FRONTEND_BASE') + set_params['url'][4:]
+    brandname = os.getenv('BRANDNAME')
+    page_type = set_params['page_type']
+    if page_type == 'catalog':
+        return {'title': 'Catalog Default Title', 'meta_description': 'Catalog meta_description Default'}
+    elif page_type not in ['info', 'cart', 'checkout', 'profile', 'catalog']:
         try:
-            seo_attr = SEOAttributes.objects.get(page_url=domain_name+'/')
-            result['seo_title'] = seo_attr.title
-            result['seo_meta_description'] = seo_attr.meta_description
+            seo_attr_db = SEOAttributes.objects.get(page_url=url_full)
+            seo_attr_res = {'title': seo_attr_db.title, 'meta_description': seo_attr_db.meta_description}
         except:
-            pass
-        return result
-
-    if path_parts[0] in ['catalog', 'blog']:
-        try:
-            seo_attr = SEOAttributes.objects.get(page_url=domain_name+clear_path)
-            if seo_attr.title != '' and seo_attr.meta_description != '':
-                result['seo_title'] = seo_attr.title
-                result['seo_meta_description'] = seo_attr.meta_description
-            else:
-                if len(path_parts) >= 2 and path_parts[0] == 'catalog':
-                    if len(path_parts) == 3 and not path_parts[2].isdigit():
-                        sub_category = ProductSubCategory.objects.get(slug=path_parts[2])
-                        result['seo_title'] = f'{sub_category.name} - купить c доставкой на дом | IMSOUND.ru'
-                        result['seo_meta_description'] = f'На нашем сайте вы можете купить {sub_category.name} c доставкой на дом | IMSOUND.ru'
-                    elif len(path_parts) == 2:
-                        category = ProductCategory.objects.get(slug=path_parts[1])
-                        result['seo_title'] = f'{category.name} - купить c доставкой на дом | IMSOUND.ru'
-                        result['seo_meta_description'] = f'На нашем сайте вы можете купить {category.name} c доставкой на дом | IMSOUND.ru'
-                    elif len(path_parts) == 3 and path_parts[2].isdigit():
-                        product = Product.objects.get(id=path_parts[2])
-                        result['seo_title'] = f'{product.name} - купить c доставкой на дом | IMSOUND.ru'
-                        result['seo_meta_description'] = f'На нашем сайте вы можете купить {product.name} c доставкой на дом | IMSOUND.ru'
-                elif path_parts == ['blog']:
-                    result['seo_title'] = f'Блог о световом и музыкальном оборудовани | IMSOUND.ru'
-                    result['seo_meta_description'] = f'Тут вы можете найти полезные статьи о профессиональном световом и музыкальном оборудовании | IMSOUND.ru'
-                elif len(path_parts) >= 2 and path_parts[:2] == ['blog', 'article']:
-                    article = Article.objects.get(slug=path_parts[2])
-                    result['seo_title'] = f'{article.title} читать в блоге | IMSOUND.ru'
-                    result['seo_meta_description'] = f'Узнайте все об {article.title} в статье нашего блога  | IMSOUND.ru'
-
-        except SEOAttributes.DoesNotExist:
-            result = {}
+            seo_attr_res = {'title': '', 'meta_description': ''}
     else:
-        result = {}
+        seo_attr_res = {'title': '', 'meta_description': ''}
 
-    return result
+    if not seo_attr_res['title']:
+        if page_type == 'category':
+            seo_attr_res['title'] = f'{set_params["category_name"]} - купить c доставкой на дом | '
+        elif page_type == 'subcategory':
+            seo_attr_res['title'] = f'{set_params["subcategory_name"]} - купить c доставкой на дом | '
+        elif page_type == 'product':
+            seo_attr_res['title'] = f'{set_params["product_name"]} - купить {set_params["subcategory_name"]} c доставкой на дом | '
+        elif page_type == 'tag':
+            seo_attr_res['title'] = f'{set_params["tag_name"]} - купить c доставкой на дом | '
+        elif page_type == 'blog':
+            seo_attr_res['title'] = f'Блог интернет-магазина | '
+        elif page_type == 'article':
+            seo_attr_res['title'] = f'{set_params["article_title"]} - смотреть обзоры в блоге | '
+        elif page_type == 'info':
+            seo_attr_res['title'] = f'Информация об интернет-магазине | '
+        elif page_type == 'cart':
+            seo_attr_res['title'] = f'Корзина магазина | '
+        elif page_type == 'checkout':
+            seo_attr_res['title'] = f'Оформление заказа | '
+        elif page_type == 'profile':
+            seo_attr_res['title'] = f'Личный кабинет | '
+
+    seo_attr_res['title'] += brandname
+
+    if not seo_attr_res['meta_description']:
+        if page_type == 'category':
+            seo_attr_res['meta_description'] = f'{set_params["category_name"]} meta_description default | '
+        elif page_type == 'subcategory':
+            seo_attr_res['meta_description'] = f'{set_params["subcategory_name"]} meta_description default | '
+        elif page_type == 'product':
+            seo_attr_res['meta_description'] = f'{set_params["product_name"]} meta_description default | '
+        elif page_type == 'tag':
+            seo_attr_res['meta_description'] = f'Tag {set_params["tag_name"]}meta_description default | '
+        elif page_type == 'blog':
+            seo_attr_res['meta_description'] = f'Блог интернет-магазина meta_description default | '
+        elif page_type == 'article':
+            seo_attr_res['meta_description'] = f'{set_params["article_title"]} meta_description default'
+        elif page_type == 'info':
+            seo_attr_res['meta_description'] = f'Информация об интернет-магазине | '
+        elif page_type == 'cart':
+            seo_attr_res['meta_description'] = f'Корзина магазина | '
+        elif page_type == 'checkout':
+            seo_attr_res['meta_description'] = f'Оформление заказа | '
+        elif page_type == 'profile':
+            seo_attr_res['meta_description'] = f'Личный кабинет | '
+
+    seo_attr_res['meta_description'] += brandname
+
+    return seo_attr_res

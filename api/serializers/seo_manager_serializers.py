@@ -17,7 +17,7 @@ class SEOAttributesSerializer(serializers.ModelSerializer):
 class SliderImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = SliderImage
-        fields = '__all__'
+        fields = ['id', 'image', 'subtitle', 'subtitle', 'alt_text']
 
 
 class TagSerializer(serializers.ModelSerializer):

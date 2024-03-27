@@ -1,50 +1,39 @@
-from django.shortcuts import get_object_or_404
-
-from products.models import (Product, ProductCategory,
-                             ProductSubCategory)
-
-
-def get_breadcrumbs(request):
-    path_parts = request.path.strip('/').split('/')
-    unwanted_parts = ['api', 'users', 'profile', 'order', 'orders', 'cart', 'page', 'tag', 'info']
-    path_parts = [part for part in path_parts if part not in unwanted_parts]
-
+def get_breadcrumbs(set_params):
+    page_type = set_params['page_type']
+    path_parts = set_params['url'].strip('/').split('/')
     breadcrumbs = [('/', 'Главная')]
+    catalog_crumb = ('catalog', 'Каталог')
 
-    if 'catalog' in path_parts:
-        breadcrumbs.append(('/catalog', 'Каталог'))
-        url_so_far = '/catalog'
-
-        try:
-            product_id = int(path_parts[2])
-            product = get_object_or_404(Product, id=product_id)
-            category_name = product.category.name
-            url_so_far += f'/{product.category.slug}'
-            breadcrumbs.append((url_so_far, category_name))
-            subcategory_name = product.sub_category.name
-            url_so_far += f'/{product.sub_category.slug}'
-            breadcrumbs.append((url_so_far, subcategory_name))
-            breadcrumbs.append((f'/catalog/{product.slug}/{product.id}', product.name))
-        except:
-            if len(path_parts) == 2:
-                category = ProductCategory.objects.get(slug=path_parts[1])
-                category_name = category.name
-                breadcrumbs.append((f'/catalog/{category_name}/', category_name))
-            elif len(path_parts) == 3:
-                category = ProductCategory.objects.get(slug=path_parts[1])
-                category_name = category.name
-                breadcrumbs.append((f'/catalog/{category.slug}/', category_name))
-                sub_category = ProductSubCategory.objects.get(slug=path_parts[2])
-                subcategory_name = sub_category.name
-                breadcrumbs.append((f'/catalog/{category.slug}/{sub_category.slug}/', subcategory_name))
-
-    # Доделать блок для блога
-
-    if request.path == '/api/orders/checkout/':
-        if request.user.is_authenticated:
-            breadcrumbs.append(('/users/cart/', 'Корзина'))
-        else:
-            breadcrumbs.append(('/users/cart_guest/', 'Корзина'))
+    if page_type == 'catalog':
+        return [('/', 'Главная'), catalog_crumb]
+    elif page_type == 'category':
+        breadcrumbs.append(catalog_crumb)
+        breadcrumbs.append((f'{set_params["url"]}', f'{set_params["category_name"]}'))
+    elif page_type == 'subcategory':
+        breadcrumbs.append(catalog_crumb)
+        breadcrumbs.append((f'/{path_parts[1]}/{path_parts[2]}/', f'{set_params["category_name"]}'))
+        breadcrumbs.append((f'/{path_parts[1]}/{path_parts[2]}/{path_parts[3]}/', f'{set_params["subcategory_name"]}'))
+    elif page_type == 'product':
+        breadcrumbs.append(catalog_crumb)
+        breadcrumbs.append((f'/catalog/{set_params["category_slug"]}/', f'{set_params["category_name"]}'))
+        breadcrumbs.append((f'/catalog/{set_params["category_slug"]}/{set_params["subcategory_slug"]}/', f'{set_params["subcategory_name"]}'))
+        breadcrumbs.append((f'/catalog/{set_params["product_slug"]}/{set_params["product_id"]}/', f'{set_params["product_name"]}'))
+    elif page_type == 'tag':
+        breadcrumbs.append(catalog_crumb)
+        breadcrumbs.append((f'/catalog/tags/{path_parts[2]}', f'{set_params["tag_name"]}'))
+    elif page_type == 'blog':
+        pass
+    elif page_type == 'article':
+        pass
+    elif page_type == 'info':
+        pass
+    elif page_type == 'cart':
+        breadcrumbs.append(catalog_crumb)
+        breadcrumbs.append((f'/users/cart', f'Корзина'))
+    elif page_type == 'checkout':
+        pass
+    elif page_type == 'profile':
+        pass
 
     return breadcrumbs
 

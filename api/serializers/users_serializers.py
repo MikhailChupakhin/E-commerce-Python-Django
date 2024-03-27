@@ -47,8 +47,6 @@ class UserProfileFormSerializer(serializers.ModelSerializer):
 class UserCartSerializer(serializers.Serializer):
     cart_items = BasketSerializer(many=True)
     selected_delivery_method_id = serializers.IntegerField()
-    title = serializers.CharField()
-    products_in_cart = serializers.IntegerField()
     order_total_price = serializers.DecimalField(max_digits=10, decimal_places=2)
     delivery_methods = DeliveryMethodSerializer(many=True)
 

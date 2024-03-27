@@ -21,7 +21,7 @@ def export_product_to_xlsx(request):
     worksheet.title = 'Product Cards'
 
     headers = ['ID', 'Name', 'Manufacturer', 'Description', 'Price', 'Category', 'Subcategory', 'Discount Percentage',
-               'discount_price', 'total_price', 'Article Number', 'Quantity', 'Image', 'Stripe Product Price ID']
+               'discount_price', 'total_price', 'Article Number', 'Quantity', 'Image']
     for col, header in enumerate(headers, start=1):
         cell = worksheet.cell(row=1, column=col, value=header)
         cell.font = Font(bold=True)
@@ -32,18 +32,17 @@ def export_product_to_xlsx(request):
         product_data = (
             product.id,
             product.name,
-            product.manufacturer.name,
-            product.description,
-            product.price,
+            product.manufacturer.name if product.manufacturer else None,
+            product.description if product.description else None,
+            product.price if product.price else None,
             product.category.name,
             product.sub_category.name,
-            product.discount_percentage,
-            product.discount_price,
-            product.total_price,
-            product.article_number,
-            product.quantity,
-            product.image.url if product.image else "",
-            product.stripe_product_price_id,
+            product.discount_percentage if product.discount_percentage else None,
+            product.discount_price if product.discount_price else None,
+            product.total_price if product.total_price else None,
+            product.article_number if product.article_number else None,
+            product.quantity if product.quantity else None,
+            product.image.url if product.image else None,
         )
 
         for col, data in enumerate(product_data, start=1):

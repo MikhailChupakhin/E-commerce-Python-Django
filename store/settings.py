@@ -92,7 +92,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.sitemaps',
-
+    'corsheaders',
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
@@ -101,11 +101,8 @@ INSTALLED_APPS = [
     'debug_toolbar',
     'django_extensions',
     'rest_framework',
-    # 'rest_framework_simplejwt',
     'ckeditor',
     'drf_yasg',
-    'corsheaders',
-
     'django.contrib.staticfiles',
     'products',
     'users',
@@ -117,6 +114,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -125,10 +123,8 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
-    'products.middleware.RedirectMiddleware',
     'products.middleware.CustomHeaderMiddleware',
     'store.middlewares.XCacheMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'store.urls'
@@ -302,27 +298,42 @@ CELERY_BEAT_SCHEDULE = {
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework.authentication.SessionAuthentication',
         'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
     ),
+    'EXCEPTION_HANDLER': 'api.utils.exception_handler.custom_exception_handler',
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 9,
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=10),
+    'REFRESH_TOKEN_LIFETIME': timedelta(minutes=60*24),
 }
+
+#CSRF
+CSRF_TRUSTED_ORIGINS = [
+    'https://imsound.ru',
+    'https://www.imsound.ru',
+    'http://localhost:3000',
+    'https://imsound-frontend-side.vercel.app',
+]
 
 # CORS
 CORS_ALLOWED_ORIGINS = [
     'http://127.0.0.1:8000',
     'https://imsound.ru',
+    'http://localhost:3000',
+    'https://imsound-frontend-side.vercel.app',
 ]
+
 # CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_HEADERS = [
+    'Origin',
+    'Content-Type',
     'PAGINATIONPARAM',
-    'guest_token',
+    'guest-token',
+    'Authorization'
 ]
 # SITEMAP
 

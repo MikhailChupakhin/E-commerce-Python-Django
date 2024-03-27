@@ -12,6 +12,7 @@ class DeliveryMethod(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
     price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    form_fields = models.JSONField(default=dict)
     is_active = models.BooleanField(default=False)
 
     class Meta:
@@ -19,7 +20,7 @@ class DeliveryMethod(models.Model):
         verbose_name_plural = 'Методы доставки'
 
     def __str__(self):
-        return f'DelMethod #{self.id}. {self.name}'
+        return f'{self.name}'
 
 
 class PaymentMethod(models.Model):
@@ -52,9 +53,9 @@ class Order(models.Model):
     first_name = models.CharField(max_length=64)
     last_name = models.CharField(max_length=64)
     email = models.EmailField(max_length=256)
-    city = models.CharField(max_length=50)
-    province = models.CharField(choices=PROVINCE_CHOICES)
-    address = models.CharField(max_length=256)
+    city = models.CharField(max_length=50, blank=True)
+    province = models.CharField(choices=PROVINCE_CHOICES, blank=True)
+    address = models.CharField(max_length=256, blank=True)
     phone = models.CharField(max_length=20)
     aux_phone = models.CharField(max_length=20, blank=True)
     company = models.CharField(max_length=64, blank=True)
